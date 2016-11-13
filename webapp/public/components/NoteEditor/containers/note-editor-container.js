@@ -1,15 +1,24 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { connect } from 'react-redux';
+import { ModalContainer, ModalDialog } from 'react-modal-dialog';
 import NoteEditor from '../note-editor';
 import { rawTreeSelector } from '../../../selectors';
 import * as actions from '../../../actions';
 import * as lib from '../../../lib';
 
 class NoteEditorContainer extends Component {
-	
+	constructor(props) {
+		super(props);
+		this.state = {
+			isShowingModal: false
+		};
+	}
+
 	onSubmit() {
-		console.log('Submitted!', this.props.notes);
+		this.setState({
+			isShowingModal: true
+		});
 	}
 
 	createMindMap() {
@@ -36,15 +45,33 @@ class NoteEditorContainer extends Component {
 		.then((res) => {
 			const prefixes = lib.formatSyntaxTree(res.data[0].result, this.props.sentences);
 			this.props.createMindMap(prefixes);
+			this.props.logResult(res.data[0].result);
 		})
 		.catch((err) => {
 			console.log('Error', err);
 		});
 	}
 
+	handleClick = () => this.setState({isShowingModal: true})
+  	handleClose = () => this.setState({isShowingModal: false})
+
 	render() {
 		return (
 			<div>
+				<div onClick={this.handleClick}>
+			      {
+			        this.state.isShowingModal &&
+			        <ModalContainer onClose={this.handleClose}>
+			          <ModalDialog onClose={this.handleClose}>
+			          	  <label>Please enter your phone number.</label>
+					      <input type="text" placeholder="(123)-456-7890" />
+					      <button className='success button' onClick={this.handleClose}>
+					      	Submit
+					      </button>
+			          </ModalDialog>
+			        </ModalContainer>
+			      }
+			    </div>
 				<h3 style={{ color: '#888888', fontSize: '15' }}>Write Your Notes</h3>
 				<NoteEditor 
 					onSubmit={() => this.onSubmit()}

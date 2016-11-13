@@ -15,3 +15,10 @@ export const createMindMap = (prefixes) => (
 	}
 );
 
+export const logResult = (result) => (
+	{
+		type: types.LOG_RESULT,
+		payload: result
+	}
+);
+
