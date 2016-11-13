@@ -78,13 +78,26 @@ function generateMapping(note, tree) {
     var start = startEnd[0];
     var end = startEnd[1];
     var mapping = [getNounPhrase(noteArray, start), getVerbPhrase(noteArray, start, end), getObjectPhrase(noteArray, end)];
-    console.log(mapping);
     return mapping;
 }
 
-var note = "John Adams drafted the Declaration of Independence";
-var tree = "(TOP (S (NP (NNP John) (NNP Adams)) (VP (VBD wrote) (NP (NP (DT the) (NNP Declaration)) (PP (IN of) (NP (NNP Independence)))))))";
-generateMapping(note, tree);
+
+// Generates and pushes questions to Firebase
+function generateAndPushQuestions(note, tree) {
+    var mapping = generateMapping(note, tree);
+    var blank = "_____"
+    for (var i = 0; i < mapping.length; i++) {
+        var temp = mapping[i];
+        mapping[i] = blank;
+        var question = mapping.join(" ");
+        var answer = temp.replace(/[.,;]/g, "").replace(/\s{2,}/g," ");
+        mapping[i] = temp;
+    }
+}
+
+var note = "John Adams drafted the Declaration of Independence.";
+var tree = "(TOP (S (NP (NNP John) (NNP Adams)) (VP (VBD drafted) (NP (NP (DT the) (NNP Declaration)) (PP (IN of) (NP (NNP Independence))))) (. .)))";
+generateAndPushQuestions(note, tree);
 note = "drafted the declaration of independence is a document";
 tree = "(VP (VBD drafted) (NP (NP (DT the) (NN declaration)) (PP (IN of) (NP (NN independence)))) (VP (VBZ is) (NP (DT a) (NN document))))";
-generateMapping(note, tree);
+generateAndPushQuestions(note, tree);
