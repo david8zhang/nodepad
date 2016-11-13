@@ -48,10 +48,18 @@ class NoteEditor extends Component {
 					/>
 				</div>
 				<div>
-					<button className='button' onClick={() => this.onSubmit()}>
-						Submit
-					</button>
-					{ this.props.children }
+					<div className='small-12 large-6 columns' style={{ padding: '0px' }}>
+						<button 
+							style={{ marginTop: '5px', width: '100%' }}
+							className='button' 
+							onClick={() => this.onSubmit()}
+						>
+							Submit
+						</button>					
+					</div>
+					<div className='small-12 large-6 columns' style={{ padding: '0px' }}>
+						{ this.props.children }
+					</div>
 				</div>
 			</div>
 		);

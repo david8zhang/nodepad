@@ -59,6 +59,8 @@ function renderFullPage(html, initialState) {
 				<meta charset="utf-8" />
 				<title>protospace</title>
 				<link rel="stylesheet" href="/static/style.css"/>
+				<link rel="stylesheet" href="/static/css/DraftStyleDefault.css">
+				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.css"/>
 				<link rel="stylesheet" href="/static/css/foundation.css"/>
 				<link rel="stylesheet" href="/static/css/foundation.min.css"/>
 			</head>

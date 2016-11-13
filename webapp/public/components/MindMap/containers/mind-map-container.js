@@ -10,6 +10,7 @@ class MindMapContainer extends Component {
 	render() {
 		return (
 			<div>
+				<h3 style={{ color: '#888888', fontSize: '15' }}>Visualize Your Notes</h3>
 				<MindMap topology={this.props.topology} />
 			</div>
 		);

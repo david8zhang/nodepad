@@ -8,7 +8,7 @@ class NotePage extends Component {
 	render() {
 		return (
 			<div>
-				<div>
+				<div style={{ paddingTop: '20px' }}>
 					<div className='small-12 large-6 columns'>
 						<NoteEditorContainer />
 					</div>

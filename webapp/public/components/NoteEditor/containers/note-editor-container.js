@@ -16,7 +16,7 @@ class NoteEditorContainer extends Component {
 		const config = {
 			headers: {
 				'Content-Type': 'application/json',
-				'Ocp-Apim-Subscription-Key': 
+				'Ocp-Apim-Subscription-Key': '6de09bd091c04651ba0b171bf78a12ae'
 			}
 		};
 
@@ -45,11 +45,16 @@ class NoteEditorContainer extends Component {
 	render() {
 		return (
 			<div>
+				<h3 style={{ color: '#888888', fontSize: '15' }}>Write Your Notes</h3>
 				<NoteEditor 
 					onSubmit={() => this.onSubmit()}
 					onChange={(wordArray) => this.props.postRawNotes(wordArray)}
 				>
-					<button className='button' onClick={() => this.createMindMap()}>
+					<button 
+						style={{ marginTop: '5px', width: '100%' }}
+						className='success button' 
+						onClick={() => this.createMindMap()}
+					>
 						Create Mind Map
 					</button>
 				</NoteEditor>
