@@ -1,3 +1,14 @@
+// Setup Alchemy Language
+var watson = require('watson-developer-cloud');
+var alchemy_language = watson.alchemy_language({
+  api_key: 'API-KEY'
+})
+
+// Generate random int
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // Returns index of first noun phrase of treeArray
 function getSlicingIndex(treeArray) {
     index = 0
@@ -81,16 +92,55 @@ function generateMapping(note, tree) {
     return mapping;
 }
 
+// Pushes questions to Firebase
+function pushQuestions(question, answer) {
+    console.log("Q:", question, "A:", answer);
+}
 
 // Generates and pushes questions to Firebase
 function generateAndPushQuestions(note, tree) {
     var mapping = generateMapping(note, tree);
-    var blank = "_____"
+    var blank = "_____";
+    var parameters = {
+        text: note
+    };
+    alchemy_language.relations(parameters, function (err, response) {
+        if (err) {
+            console.log('error:', err);
+        } else {
+            var relations = response["relations"];
+            relations.forEach(function (relation) {
+                if ("location" in relation) {
+                    if ("subject" in relation && "action" in relation) {
+                        var subject = relation["subject"]["text"].replace(/The/g, "the");
+                        var action = relation["action"]["text"].replace(/was /g, "");
+                        var question = "Where was " + subject + " " + action + "?";
+                        var answer = relation["location"]["text"];
+                        pushQuestions(question, answer);
+                    }
+                }
+            })
+        }
+    });
     for (var i = 0; i < mapping.length; i++) {
+        if (mapping[i] == "is" || mapping[i] == "was" || mapping[i] == "are" || mapping[i] == "were") {
+            var value = getRandomInt(0, 1);
+            if (value == 0) {
+                question = "True/False: " + mapping.join(" ");
+                answer = "True";
+                console.log("Q:", question, "A:", answer);
+            } else {
+                question = "True/False " + mapping[0] + " " + mapping[1] + " not " + mapping[2];
+                answer = "False";
+                console.log("Q:", question, "A:", answer);
+            }
+            continue;
+        }
         var temp = mapping[i];
         mapping[i] = blank;
         var question = mapping.join(" ");
         var answer = temp.replace(/[.,;]/g, "").replace(/\s{2,}/g," ");
+        pushQuestions(question, answer)
         mapping[i] = temp;
     }
 }
@@ -100,4 +150,7 @@ var tree = "(TOP (S (NP (NNP John) (NNP Adams)) (VP (VBD drafted) (NP (NP (DT th
 generateAndPushQuestions(note, tree);
 note = "drafted the declaration of independence is a document";
 tree = "(VP (VBD drafted) (NP (NP (DT the) (NN declaration)) (PP (IN of) (NP (NN independence)))) (VP (VBZ is) (NP (DT a) (NN document))))";
+generateAndPushQuestions(note, tree);
+note = "The Declaration of Independence was written in Pennsylvania.";
+tree = "(TOP (S (NP (NP (DT The) (NNP Declaration)) (PP (IN of) (NP (NNP Independence)))) (VP (VBD was) (VP (VBN written) (PP (IN in) (NP (NNP Pennsylvania))))) (. .)))";
 generateAndPushQuestions(note, tree);
