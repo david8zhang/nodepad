@@ -13,3 +13,6 @@ export { NoteEditorContainer } from './NoteEditor/containers';
 /** MindMap component */
 export { default as MindMap } from './MindMap/mind-map';
 export { MindMapContainer } from './MindMap/containers';
+
+/** Node Component */
+export { default as Node } from './Node/node';

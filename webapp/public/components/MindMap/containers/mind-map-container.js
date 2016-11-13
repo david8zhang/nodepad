@@ -1,19 +1,25 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import MindMap from '../mind-map';
-import { rawTreeSelector } from '../../../selectors';
+import { 
+	rawTreeSelector, 
+	topologySelector
+} from '../../../selectors';
 
 class MindMapContainer extends Component {
 	render() {
 		return (
-			<MindMap />
+			<div>
+				<MindMap topology={this.props.topology} />
+			</div>
 		);
 	}
 }
 
 const mapStateToProps = (state) => (
 	{
-		sentences: rawTreeSelector(state)
+		sentences: rawTreeSelector(state),
+		topology: topologySelector(state)
 	}
 );
 

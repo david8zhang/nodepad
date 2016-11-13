@@ -1,3 +1,4 @@
 export {
-	postRawNotes
+	postRawNotes,
+	createMindMap
 } from './NotesPage';

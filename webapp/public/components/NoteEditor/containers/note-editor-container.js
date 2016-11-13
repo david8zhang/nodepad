@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import NoteEditor from '../note-editor';
 import { rawTreeSelector } from '../../../selectors';
 import * as actions from '../../../actions';
+import * as lib from '../../../lib';
 
 class NoteEditorContainer extends Component {
 	
@@ -15,7 +16,7 @@ class NoteEditorContainer extends Component {
 		const config = {
 			headers: {
 				'Content-Type': 'application/json',
-				'Ocp-Apim-Subscription-Key': '6de09bd091c04651ba0b171bf78a12ae'
+				'Ocp-Apim-Subscription-Key': 
 			}
 		};
 
@@ -33,14 +34,12 @@ class NoteEditorContainer extends Component {
 			text: para
 		}, config)
 		.then((res) => {
-			console.log('Response', res);
+			const prefixes = lib.formatSyntaxTree(res.data[0].result, this.props.sentences);
+			this.props.createMindMap(prefixes);
 		})
 		.catch((err) => {
 			console.log('Error', err);
 		});
-		// if (this.props.sentences) {
-		// 	this.props.createMindMap(this.props.sentences);
-		// }
 	}
 
 	render() {
@@ -50,7 +49,7 @@ class NoteEditorContainer extends Component {
 					onSubmit={() => this.onSubmit()}
 					onChange={(wordArray) => this.props.postRawNotes(wordArray)}
 				>
-					<button onClick={() => this.createMindMap()}>
+					<button className='button' onClick={() => this.createMindMap()}>
 						Create Mind Map
 					</button>
 				</NoteEditor>

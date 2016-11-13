@@ -35,7 +35,9 @@ const createSentences = (tree) => {
 						depth: node.depth + 1,
 						subject: child
 					});
-					sentences.push(`${key} ${child}`);
+					if (node.depth > -1) {
+						sentences.push(`${key} ${child}`);
+					}
 				});					
 			}
 		} catch (e) {

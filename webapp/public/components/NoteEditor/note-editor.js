@@ -48,7 +48,7 @@ class NoteEditor extends Component {
 					/>
 				</div>
 				<div>
-					<button onClick={() => this.onSubmit()}>
+					<button className='button' onClick={() => this.onSubmit()}>
 						Submit
 					</button>
 					{ this.props.children }

@@ -8,11 +8,10 @@ export const postRawNotes = (wordArray) => (
 	}
 );
 
-export const createMindMap = (sentences) => (
+export const createMindMap = (prefixes) => (
 	{
 		type: types.CREATE_MIND_MAP,
-		payload: createNodes(sentences)
+		payload: prefixes
 	}
 );
 
-const createNodes = (sentences) => [sentences];
