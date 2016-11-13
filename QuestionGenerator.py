@@ -1,10 +1,10 @@
-import http.client
+from firebase import firebase
 import json
 
 def push_to_database(userId, classId, data):
+    phone_number = 123456789 #Get actual phone number from DB
+    database = firebase.FirebaseApplication("https://nodepad-ecd25.firebaseio.com/", None)
     question, answer = data[0], data[1]
-    conn = http.client.HTTPSConnection("nodepad-ecd25.firebaseio.com/.json")
-    headers = {"Content-type": "application/json"}
     payload = dict()
     payload["userId"] = userId
     payload["classId"] = classId
@@ -12,12 +12,7 @@ def push_to_database(userId, classId, data):
     qa["Question"] = question
     qa["Answer"] = answer
     payload["QA"] = qa
-    json_payload = json.dumps(payload)
-    #with open("test.json") as test:
-    conn.request("POST", "/markdown", json_payload, headers)
-    response = conn.getresponse()
-    print(response.read().decode())
-    conn.close()
+    database.post("/" + str(phone_number), payload)
 
 # Returns True if tag is a proper noun else False
 def is_proper_noun(tag):
