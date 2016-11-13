@@ -83,6 +83,7 @@
     "reselect": "^2.5.4",
     "serve-favicon": "^2.3.0",
     "sha-1": "^0.1.1",
+    "tabdown-sacha": "0.0.3",
     "util": "^0.10.3",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",

@@ -1,4 +1,3 @@
-export { 
-	addCount,
-	decCount
-} from './SamplePage';
+export {
+	postRawNotes
+} from './NotesPage';

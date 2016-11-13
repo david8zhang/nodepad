@@ -3,12 +3,12 @@ import { Route } from 'react-router';
 
 /** Containers */
 import { 
-	SamplePage,
-	IndexPage
+	IndexPage,
+	NotePage
 } from './pages';
 
 export default (
 	<Route path='/' component={IndexPage}>
-		<Route path='sample' component={SamplePage} />
+		<Route path='notes' component={NotePage} />
 	</Route>
 );

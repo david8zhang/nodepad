@@ -1,9 +1,7 @@
-const ADD_COUNT = 'ADD_COUNT';
-const DEC_COUNT = 'DEC_COUNT';
+const POST_RAW_NOTES = 'POST_RAW_NOTES';
 
 const types = {
-	ADD_COUNT,
-	DEC_COUNT
+	POST_RAW_NOTES
 };
 
 export default types;

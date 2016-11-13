@@ -1,0 +1,8 @@
+.noteEditor {
+	border-color: blue;
+	border-width: 2px;
+	border-style: solid;
+	padding: 5px;
+	height: 200px;
+	width: 50%;
+}

@@ -5,3 +5,11 @@ export {
 	countEnhancer,
 	EvenCountEnhancer 
 } from './Counter/enhancers';
+
+/** Editor component */
+export { default as NoteEditor } from './NoteEditor/note-editor';
+export { NoteEditorContainer } from './NoteEditor/containers';
+
+/** MindMap component */
+export { default as MindMap } from './MindMap/mind-map';
+export { MindMapContainer } from './MindMap/containers';

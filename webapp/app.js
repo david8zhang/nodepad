@@ -56,6 +56,7 @@ function renderFullPage(html, initialState) {
 		<!doctype html>
 		<html lang="utf-8">
 			<head>
+				<meta charset="utf-8" />
 				<title>protospace</title>
 				<link rel="stylesheet" href="/static/style.css"/>
 			</head>
