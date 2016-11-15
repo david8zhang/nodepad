@@ -1,5 +1,5 @@
+import * as firebase from 'firebase';
 import types from '../types';
-
 
 export const postRawNotes = (wordArray) => (
 	{
@@ -21,4 +21,14 @@ export const logResult = (result) => (
 		payload: result
 	}
 );
+
+export const submitQuestions = (questions) => {
+	firebase.database().ref('/questions').set({
+		data: questions
+	});
+	return {
+		type: types.SUBMIT_QUESTION,
+		payload: questions
+	};
+};
 

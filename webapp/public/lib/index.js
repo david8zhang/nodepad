@@ -1,4 +1,7 @@
-import { generateMapping } from './QuestionGenerator';
+import { 
+	generateMapping,
+	generateAndPushQuestions
+} from './QuestionGenerator';
 
 export const formatSyntaxTree = (syntaxTreeArray, sentences) => {
 	const prefixes = [];
@@ -10,4 +13,16 @@ export const formatSyntaxTree = (syntaxTreeArray, sentences) => {
 		count++;
 	});
 	return prefixes;
+};
+
+export const formatBulkQuestions = (syntaxTreeArray, sentences) => {
+	const questions = [];
+	let count = 0;
+	syntaxTreeArray.forEach((syntax) => {
+		questions.push(
+			generateAndPushQuestions(sentences[count], syntax)
+		);
+		count++;
+	});
+	return questions;
 };

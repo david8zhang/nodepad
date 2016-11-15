@@ -83,7 +83,8 @@ export function generateMapping(note, tree) {
 
 
 // Generates and pushes questions to Firebase
-function generateAndPushQuestions(note, tree) {
+export function generateAndPushQuestions(note, tree) {
+    const questions = [];
     var mapping = generateMapping(note, tree);
     var blank = "_____"
     for (var i = 0; i < mapping.length; i++) {
@@ -91,8 +92,13 @@ function generateAndPushQuestions(note, tree) {
         mapping[i] = blank;
         var question = mapping.join(" ");
         var answer = temp.replace(/[.,;]/g, "").replace(/\s{2,}/g," ");
+        questions.push({
+            question,
+            answer
+        });
         mapping[i] = temp;
     }
+    return questions;
 }
 
 var note = "John Adams drafted the Declaration of Independence.";
