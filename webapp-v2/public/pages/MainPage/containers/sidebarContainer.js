@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import * as actions from '../../../actions';
+import styles from './containers.css';
 
 class SidebarContainer extends Component {
 	renderSubtree() {
@@ -85,7 +86,7 @@ class SidebarContainer extends Component {
 
 	render() {
 		return (
-			<div>
+			<div className={styles.sidebar}>
 				{
 					this.props.subTree && 
 					this.renderSubtree()

@@ -6,8 +6,10 @@ import { Router, browserHistory } from 'react-router';
 import routes from './routes';
 import { store } from './store';
 
+console.log(document.getElementById('container'));
+
 ReactDOM.render(
   <Provider store={store}>
     <Router history={browserHistory}>{routes}</Router>
   </Provider>
-  , document.querySelector('.container'));
+  , document.getElementById('container'));

@@ -74,6 +74,8 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	/* global document */
+	console.log(document.getElementById('container'));
+
 	_reactDom2.default.render(_react2.default.createElement(
 	  _reactRedux.Provider,
 	  { store: _store.store },
@@ -82,7 +84,7 @@
 	    { history: _reactRouter.browserHistory },
 	    _routes2.default
 	  )
-	), document.querySelector('.container'));
+	), document.getElementById('container'));
 
 /***/ },
 /* 2 */
@@ -34941,12 +34943,12 @@
 					{ className: 'row' },
 					_react2.default.createElement(
 						'div',
-						{ className: 'one-thirds column' },
+						{ className: 'three columns' },
 						_react2.default.createElement(_containers.SidebarContainer, null)
 					),
 					_react2.default.createElement(
 						'div',
-						{ className: 'two-thirds column' },
+						{ className: 'nine columns' },
 						_react2.default.createElement(_components.Button, {
 							text: 'Create Node',
 							onClick: function onClick() {
@@ -54360,6 +54362,11 @@
 			value: function render() {
 				var _this2 = this;
 
+				var truncated = this.props.text;
+				if (this.props.text.length > 15) {
+					truncated = this.props.text.substring(0, 10);
+					truncated += '...';
+				}
 				return _react2.default.createElement(
 					_reactKonva.Layer,
 					null,
@@ -54389,7 +54396,7 @@
 							ref: 'text ' + this.props.id,
 							x: this.state.x,
 							y: this.state.y,
-							text: this.props.text,
+							text: truncated,
 							fill: this.state.updated ? this.props.textColor : '#ffffff'
 						})
 					)
@@ -71363,11 +71370,14 @@
 				props.label
 			),
 			_react2.default.createElement('textarea', {
+				rows: 25,
+				cols: 100,
 				id: props.id,
 				className: 'u-full-width',
 				placeholder: props.placeholder,
 				value: props.value,
 				onKeyDown: function onKeyDown(e) {
+					console.log(e.keyCode);
 					if (e.keyCode === 9) {
 						e.preventDefault();
 						props.onChange(props.value + '\t');
@@ -71744,6 +71754,10 @@
 
 	var actions = _interopRequireWildcard(_actions);
 
+	var _containers = __webpack_require__(361);
+
+	var _containers2 = _interopRequireDefault(_containers);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -71895,7 +71909,7 @@
 			value: function render() {
 				return _react2.default.createElement(
 					'div',
-					null,
+					{ className: _containers2.default.sidebar },
 					this.props.subTree && this.renderSubtree()
 				);
 			}
@@ -71911,6 +71925,15 @@
 	};
 
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, actions)(SidebarContainer);
+
+/***/ },
+/* 361 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	// removed by extract-text-webpack-plugin
+	module.exports = { "sidebar": "containers__sidebar___2otx2" };
 
 /***/ }
 /******/ ]);

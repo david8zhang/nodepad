@@ -40,6 +40,11 @@ class Node extends Component {
 	}
 
 	render() {
+		let truncated = this.props.text;
+		if (this.props.text.length > 15) {
+			truncated = this.props.text.substring(0, 10);
+			truncated += '...';
+		}
 		return (
 			<Layer>
 				<Group
@@ -62,7 +67,7 @@ class Node extends Component {
 						ref={`text ${this.props.id}`}
 						x={this.state.x}
 						y={this.state.y}
-						text={this.props.text}
+						text={truncated}
 						fill={this.state.updated ? this.props.textColor : '#ffffff'}
 					/>
 				</Group>

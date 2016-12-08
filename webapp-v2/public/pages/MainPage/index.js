@@ -18,10 +18,10 @@ class MainPage extends Component {
 	render() {
 		return (
 			<div className='row'>
-				<div className='one-thirds column'>
+				<div className='three columns'>
 					<SidebarContainer />
 				</div>
-				<div className='two-thirds column'>
+				<div className='nine columns'>
 					<Button
 						text='Create Node'
 						onClick={() => this.setState({ isShowingModal: true })}

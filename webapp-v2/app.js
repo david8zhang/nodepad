@@ -63,7 +63,7 @@ function renderFullPage(html, initialState) {
 				<link rel="stylesheet" href="/static/style.css"/>
 			</head>
 			<body>
-				<div class="container">${html}</div>
+				<div id="container">${html}</div>
 				<script>window.$REDUX_STATE=${initialState}</script>
 				<script src="/static/bundle.js"></script>
 			</body>
