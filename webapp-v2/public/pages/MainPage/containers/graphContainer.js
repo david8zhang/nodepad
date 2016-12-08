@@ -4,13 +4,24 @@ import { connect } from 'react-redux';
 import { Stage } from 'react-konva';
 import * as actions from '../../../actions';
 import { moveNode } from '../../../lib';
+import CreateNodeModal from './createNodeModal';
 import { 
 	Node 
 } from '../../../components';
 
 
 class GraphContainer extends Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			isShowingModal: false,
+			parent: null
+		};
+	}
+
 	componentDidMount() {
+		console.log('Mounted');
+
 		// Fetch the entire graph
 		if (localStorage.getItem('topic_id')) {
 			const topicId = localStorage.getItem('topic_id');
@@ -64,6 +75,7 @@ class GraphContainer extends Component {
 					size={50}
 					x={node.x}
 					y={node.y}
+					onAddChild={(parent) => this.setState({ isShowingModal: true, parent })}
 					onClick={(nodeProps) => this.selectSubtree(nodeProps)}
 					dragNode={(pos) => this.moveNode(pos, node.id)}
 					nodeOutline='#000000'
@@ -80,6 +92,12 @@ class GraphContainer extends Component {
 	render() {
 		return (
 			<div>
+				<CreateNodeModal 
+					isShowingModal={this.state.isShowingModal}
+					onSubmit={(child) => this.props.onAddChild(child, this.state.parent)}
+					header='Add a new Child'
+					onCancel={() => this.setState({ isShowingModal: false })}
+				/>
 				<Stage width={1000} height={1000}>
 					{this.renderGraph()}
 				</Stage>

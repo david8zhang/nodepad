@@ -13,7 +13,6 @@ const TextArea = (props) => (
 			placeholder={props.placeholder}
 			value={props.value}
 			onKeyDown={(e) => {
-				console.log(e.keyCode);
 				if (e.keyCode === 9) {
 					e.preventDefault();
 					props.onChange(`${props.value}\t`);

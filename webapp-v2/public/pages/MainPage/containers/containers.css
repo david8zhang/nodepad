@@ -1,5 +1,6 @@
 .sidebar {
 	padding: 20px;
+	white-space: pre-wrap;
 }
 
 .sidebar h1 {

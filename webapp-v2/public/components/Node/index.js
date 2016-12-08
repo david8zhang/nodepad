@@ -7,7 +7,8 @@ class Node extends Component {
 		this.state = {
 			x: this.props.x,
 			y: this.props.y,
-			updated: false
+			updated: false,
+			highlight: false
 		};
 	}
 
@@ -54,8 +55,10 @@ class Node extends Component {
 					ref={`node ${this.props.id}`}
 					draggable='true'
 					onDragEnd={() => this.dragNode()}
+					onMouseEnter={() => this.setState({ highlight: true })}
+					onMouseLeave={() => this.setState({ highlight: false })}
 				>
-					<Circle 
+					<Circle
 						ref={`circle ${this.props.id}`}
 						radius={this.props.size} 
 						fill={this.props.nodeColor}
@@ -70,6 +73,18 @@ class Node extends Component {
 						text={truncated}
 						fill={this.state.updated ? this.props.textColor : '#ffffff'}
 					/>
+					{
+						this.state.highlight &&
+						<Circle
+							onClick={() => this.props.onAddChild(this.props)}
+							ref={`button ${this.props.id}`}
+							x={0}
+							y={50}
+							fill='#dddddd'
+							stroke={this.props.nodeOutline}
+							radius={25}
+						/>
+					}
 				</Group>
 			</Layer>
 		);
