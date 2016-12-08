@@ -18,17 +18,19 @@ firebase.initializeApp(fbconf);
  * @return {Promise}        A promise corresponding to a firebase write
  */
 export const createNode = (node, topicid = null) => {
+	const newNode = node;
+	newNode.edges = JSON.stringify(node.edges);
 	let newNodeRef;
 	if (topicid == null) {
 		newNodeRef = firebase.database().ref('topics').push();
 		return newNodeRef.set({
-			nodes: [node]
+			nodes: [newNode]
 		}).then(() => newNodeRef.key);
 	}
 	newNodeRef = firebase.database().ref(`topics/${topicid}`);
 	return newNodeRef.once('value').then((snapshot) => {
 		const nodes = snapshot.val().nodes;
-		const newNodes = nodes.concat(node);
+		const newNodes = nodes.concat(newNode);
 		newNodeRef.set({
 			nodes: newNodes
 		});
@@ -63,4 +65,17 @@ export const moveNode = (pos, nodeId, topicid) => {
 			nodes
 		});
 	}).then(() => newNodeRef.key);
+};
+
+/**
+ * Fetch the nodes for the given topicId
+ * @param  {String} topicId the id of the topic to fetch the nodes for
+ * @return {Promise}        a promise corresponding to the firebase get operation
+ */
+export const fetchNodes = (topicId) => {
+	const getNodeRef = firebase.database().ref(`topics/${topicId}`);
+	return getNodeRef.once('value').then((snapshot) => {
+		const nodes = snapshot.val().nodes;
+		return nodes;
+	});
 };

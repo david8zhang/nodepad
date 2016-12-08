@@ -22,6 +22,9 @@ export default (state = initialState, action) => {
 			});
 			return state.update(modifiedIndex, () => modifiedNode);			
 		}
+		case types.FETCH_NODES: {
+			return state.merge(List(action.payload));
+		}
 		default:
 			return state;
 	}

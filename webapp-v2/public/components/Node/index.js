@@ -26,6 +26,10 @@ class Node extends Component {
 		});
 	}
 
+	/**
+	 * Define what to do when the node is dragged around
+	 * @return {none} 
+	 */
 	dragNode() {
 		const node = this.refs[`node ${this.props.id}`];
 		const nodeX = node.getX();
@@ -39,6 +43,7 @@ class Node extends Component {
 		return (
 			<Layer>
 				<Group
+					onClick={() => this.props.onClick(this.props)}
 					x={this.props.x}
 					y={this.props.y}
 					ref={`node ${this.props.id}`}
