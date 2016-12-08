@@ -1,0 +1,6 @@
+FIREBASE:
+  apiKey: "AIzaSyBMlgqFadOQKT5COJkbuFg3gNSOgynKr44"
+  authDomain: "nodepad-aeefe.firebaseapp.com"
+  databaseUrl: "https://nodepad-aeefe.firebaseio.com"
+  storageBucket: "nodepad-aeefe.appspot.com"
+  messagingSenderId: "882298864820"
