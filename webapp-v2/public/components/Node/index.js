@@ -40,6 +40,19 @@ class Node extends Component {
 		}
 	}
 
+	/**
+	 * Define what to do when the user triggers a drag even
+	 * @return {[type]} [description]
+	 */
+	triggerDrag() {
+		const node = this.refs[`node ${this.props.id}`];
+		const nodeX = node.getX();
+		const nodeY = node.getY();
+		if (this.props.triggerDrag) {
+			this.props.triggerDrag([nodeX, nodeY]);
+		}
+	}
+
 	render() {
 		let truncated = this.props.text;
 		if (this.props.text.length > 15) {
@@ -54,6 +67,7 @@ class Node extends Component {
 					y={this.props.y}
 					ref={`node ${this.props.id}`}
 					draggable='true'
+					onDragStart={() => this.triggerDrag()}
 					onDragEnd={() => this.dragNode()}
 					onMouseEnter={() => this.setState({ highlight: true })}
 					onMouseLeave={() => this.setState({ highlight: false })}

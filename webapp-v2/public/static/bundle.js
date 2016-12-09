@@ -29813,7 +29813,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var initialState = (0, _immutable.List)();
+	var initialState = (0, _immutable.Map)({});
 
 	exports.default = function () {
 		var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
@@ -29822,24 +29822,17 @@
 		switch (action.type) {
 			case _types2.default.CREATE_NODE:
 				{
-					return state.push(action.payload);
+					return state.set(action.payload.id, action.payload);
 				}
 			case _types2.default.MOVE_NODE:
 				{
 					var _ret = function () {
-						var list = state.toJS();
-						var modifiedNode = void 0;
-						var modifiedIndex = 0;
-						list.forEach(function (node, index) {
-							if (node.id === action.payload.nodeId) {
-								modifiedIndex = index;
-								modifiedNode = JSON.parse(JSON.stringify(node));
-								modifiedNode.x = action.payload.pos[0];
-								modifiedNode.y = action.payload.pos[1];
-							}
-						});
+						var map = state.toJS();
+						var modifiedNode = JSON.parse(JSON.stringify(map[action.payload.nodeId]));
+						modifiedNode.x = action.payload.pos[0];
+						modifiedNode.y = action.payload.pos[1];
 						return {
-							v: state.update(modifiedIndex, function () {
+							v: state.update(action.payload.nodeId, function () {
 								return modifiedNode;
 							})
 						};
@@ -29849,7 +29842,48 @@
 				}
 			case _types2.default.FETCH_NODES:
 				{
-					return state.merge((0, _immutable.List)(action.payload));
+					return state.merge((0, _immutable.Map)(action.payload));
+				}
+			case _types2.default.ADD_CHILD:
+				{
+					var _ret2 = function () {
+						var _action$payload = action.payload,
+						    parent = _action$payload.parent,
+						    child = _action$payload.child;
+
+						// Add a new edge to the parent edge set
+
+						var parentNode = JSON.parse(JSON.stringify(state.toJS()[parent.id]));
+						var parentEdgeSet = parentNode.edges;
+						if (!parentEdgeSet) {
+							parentEdgeSet = [];
+						}
+						parentEdgeSet = parentEdgeSet.concat({
+							title: 'PARENT',
+							node: child.id
+						});
+						parentNode.edges = parentEdgeSet;
+						var newState = state.update(parent.id, function () {
+							return parentNode;
+						});
+
+						// Add a new edge to the child edge set and add the child node itself
+						// to the list of nodes
+						var childEdgeSet = child.edges;
+						if (!childEdgeSet) {
+							childEdgeSet = [];
+						}
+						childEdgeSet = childEdgeSet.concat({
+							title: 'CHILD',
+							node: parent.id
+						});
+						child.edges = childEdgeSet;
+						return {
+							v: newState.set(child.id, child)
+						};
+					}();
+
+					if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
 				}
 			default:
 				return state;
@@ -34853,12 +34887,14 @@
 	var MOVE_NODE = 'MOVE_NODE';
 	var SELECT_SUBTREE = 'SELECT_SUBTREE';
 	var FETCH_NODES = 'FETCH_NODES';
+	var ADD_CHILD = 'ADD_CHILD';
 
 	exports.default = {
 		CREATE_NODE: CREATE_NODE,
 		MOVE_NODE: MOVE_NODE,
 		SELECT_SUBTREE: SELECT_SUBTREE,
-		FETCH_NODES: FETCH_NODES
+		FETCH_NODES: FETCH_NODES,
+		ADD_CHILD: ADD_CHILD
 	};
 
 /***/ },
@@ -34913,11 +34949,11 @@
 
 	var _containers = __webpack_require__(289);
 
-	var _actions = __webpack_require__(347);
+	var _actions = __webpack_require__(348);
 
 	var actions = _interopRequireWildcard(_actions);
 
-	var _lib = __webpack_require__(349);
+	var _lib = __webpack_require__(350);
 
 	var _components = __webpack_require__(336);
 
@@ -34932,7 +34968,7 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* global localStorage */
 
 
-	var uuidV1 = __webpack_require__(359);
+	var uuidV1 = __webpack_require__(360);
 
 	var MainPage = function (_Component) {
 		_inherits(MainPage, _Component);
@@ -34943,7 +34979,8 @@
 			var _this = _possibleConstructorReturn(this, (MainPage.__proto__ || Object.getPrototypeOf(MainPage)).call(this, props));
 
 			_this.state = {
-				isShowingModal: false
+				isShowingModal: false,
+				showChildModal: false
 			};
 			return _this;
 		}
@@ -34988,18 +35025,27 @@
 		}, {
 			key: 'addChild',
 			value: function addChild(node, parent) {
+				var _this3 = this;
+
 				var child = _extends({
 					id: uuidV1()
 				}, node);
-				console.log('Parent', parent);
-				console.log('New Child', child);
+				this.props.addChild(parent, child);
+				var topicId = localStorage.getItem('topic_id');
+				(0, _lib.addChild)(child, parent, topicId).then(function () {
+					console.log('Hello!');
+					_this3.setState({
+						showChildModal: false
+					});
+				}).catch(function (err) {
+					return console.log('error!', err);
+				});
 			}
 		}, {
 			key: 'render',
 			value: function render() {
-				var _this3 = this;
+				var _this4 = this;
 
-				console.log('Rendered');
 				return _react2.default.createElement(
 					'div',
 					{ className: 'row' },
@@ -35014,22 +35060,29 @@
 						_react2.default.createElement(_components.Button, {
 							text: 'Create Node',
 							onClick: function onClick() {
-								return _this3.setState({ isShowingModal: true });
+								return _this4.setState({ isShowingModal: true });
 							}
 						}),
 						_react2.default.createElement(_containers.CreateNodeModal, {
 							isShowingModal: this.state.isShowingModal,
 							onSubmit: function onSubmit(node) {
-								return _this3.addNode(node);
+								return _this4.addNode(node);
 							},
 							header: 'Create a new Node',
 							onCancel: function onCancel() {
-								return _this3.setState({ isShowingModal: false });
+								return _this4.setState({ isShowingModal: false });
 							}
 						}),
 						_react2.default.createElement(_containers.GraphContainer, {
 							onAddChild: function onAddChild(node, parent) {
-								return _this3.addChild(node, parent);
+								return _this4.addChild(node, parent);
+							},
+							showChildModal: this.state.showChildModal,
+							toggleModal: function toggleModal() {
+								return _this4.setState({ showChildModal: true });
+							},
+							onClose: function onClose() {
+								return _this4.setState({ showChildModal: false });
 							}
 						})
 					)
@@ -35061,7 +35114,7 @@
 	  }
 	});
 
-	var _graphContainer = __webpack_require__(346);
+	var _graphContainer = __webpack_require__(347);
 
 	Object.defineProperty(exports, 'GraphContainer', {
 	  enumerable: true,
@@ -35070,7 +35123,7 @@
 	  }
 	});
 
-	var _sidebarContainer = __webpack_require__(357);
+	var _sidebarContainer = __webpack_require__(358);
 
 	Object.defineProperty(exports, 'SidebarContainer', {
 	  enumerable: true,
@@ -53437,7 +53490,16 @@
 	  }
 	});
 
-	var _common = __webpack_require__(342);
+	var _Edge = __webpack_require__(342);
+
+	Object.defineProperty(exports, 'Edge', {
+	  enumerable: true,
+	  get: function get() {
+	    return _interopRequireDefault(_Edge).default;
+	  }
+	});
+
+	var _common = __webpack_require__(343);
 
 	Object.keys(_common).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -53528,6 +53590,22 @@
 					this.props.dragNode([nodeX, nodeY]);
 				}
 			}
+
+			/**
+	   * Define what to do when the user triggers a drag even
+	   * @return {[type]} [description]
+	   */
+
+		}, {
+			key: 'triggerDrag',
+			value: function triggerDrag() {
+				var node = this.refs['node ' + this.props.id];
+				var nodeX = node.getX();
+				var nodeY = node.getY();
+				if (this.props.triggerDrag) {
+					this.props.triggerDrag([nodeX, nodeY]);
+				}
+			}
 		}, {
 			key: 'render',
 			value: function render() {
@@ -53551,6 +53629,9 @@
 							y: this.props.y,
 							ref: 'node ' + this.props.id,
 							draggable: 'true',
+							onDragStart: function onDragStart() {
+								return _this2.triggerDrag();
+							},
 							onDragEnd: function onDragEnd() {
 								return _this2.dragNode();
 							},
@@ -70421,10 +70502,71 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactKonva = __webpack_require__(338);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var Edge = function (_Component) {
+		_inherits(Edge, _Component);
+
+		function Edge() {
+			_classCallCheck(this, Edge);
+
+			return _possibleConstructorReturn(this, (Edge.__proto__ || Object.getPrototypeOf(Edge)).apply(this, arguments));
+		}
+
+		_createClass(Edge, [{
+			key: 'render',
+			value: function render() {
+				var points = [this.props.startX, this.props.startY, this.props.endX, this.props.endY];
+				console.log(points);
+				return _react2.default.createElement(
+					_reactKonva.Layer,
+					null,
+					_react2.default.createElement(
+						_reactKonva.Group,
+						null,
+						_react2.default.createElement(_reactKonva.Line, {
+							points: points,
+							stroke: this.props.edgeColor,
+							strokeWidth: 2
+						})
+					)
+				);
+			}
+		}]);
+
+		return Edge;
+	}(_react.Component);
+
+	exports.default = Edge;
+
+/***/ },
+/* 343 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
 
-	var _button = __webpack_require__(343);
+	var _button = __webpack_require__(344);
 
 	Object.keys(_button).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -70436,7 +70578,7 @@
 	  });
 	});
 
-	var _input = __webpack_require__(344);
+	var _input = __webpack_require__(345);
 
 	Object.keys(_input).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -70448,7 +70590,7 @@
 	  });
 	});
 
-	var _textarea = __webpack_require__(345);
+	var _textarea = __webpack_require__(346);
 
 	Object.keys(_textarea).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -70461,7 +70603,7 @@
 	});
 
 /***/ },
-/* 343 */
+/* 344 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70492,7 +70634,7 @@
 	exports.Button = Button;
 
 /***/ },
-/* 344 */
+/* 345 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70533,7 +70675,7 @@
 	exports.Input = Input;
 
 /***/ },
-/* 345 */
+/* 346 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70581,7 +70723,7 @@
 	exports.TextArea = TextArea;
 
 /***/ },
-/* 346 */
+/* 347 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70600,11 +70742,11 @@
 
 	var _reactKonva = __webpack_require__(338);
 
-	var _actions = __webpack_require__(347);
+	var _actions = __webpack_require__(348);
 
 	var actions = _interopRequireWildcard(_actions);
 
-	var _lib = __webpack_require__(349);
+	var _lib = __webpack_require__(350);
 
 	var _createNodeModal = __webpack_require__(290);
 
@@ -70632,7 +70774,6 @@
 			var _this = _possibleConstructorReturn(this, (GraphContainer.__proto__ || Object.getPrototypeOf(GraphContainer)).call(this, props));
 
 			_this.state = {
-				isShowingModal: false,
 				parent: null
 			};
 			return _this;
@@ -70641,8 +70782,6 @@
 		_createClass(GraphContainer, [{
 			key: 'componentDidMount',
 			value: function componentDidMount() {
-				console.log('Mounted');
-
 				// Fetch the entire graph
 				if (localStorage.getItem('topic_id')) {
 					var topicId = localStorage.getItem('topic_id');
@@ -70680,7 +70819,7 @@
 				    id = nodeProps.id;
 				var edges = nodeProps.edges;
 
-				if (typeof extra === 'string') {
+				if (typeof edges === 'string') {
 					edges = JSON.parse(edges);
 				}
 				var selectedNode = {
@@ -70693,19 +70832,26 @@
 				};
 				this.props.selectSubtree(selectedNode);
 			}
+		}, {
+			key: 'toggleModal',
+			value: function toggleModal(parent) {
+				this.setState({ parent: parent });
+				this.props.toggleModal();
+			}
 
 			/**
-	   * Render the full graph
-	   * @return {None} 
+	   * Render all the nodes within the graph
+	   * @return {JSX} A set of node components
 	   */
 
 		}, {
-			key: 'renderGraph',
-			value: function renderGraph() {
+			key: 'renderNodes',
+			value: function renderNodes() {
 				var _this2 = this;
 
 				if (this.props.nodes) {
-					return this.props.nodes.map(function (node) {
+					return Object.keys(this.props.nodes.toJS()).map(function (key) {
+						var node = _this2.props.nodes.toJS()[key];
 						return _react2.default.createElement(_components.Node, {
 							key: node.id,
 							id: node.id,
@@ -70713,7 +70859,7 @@
 							x: node.x,
 							y: node.y,
 							onAddChild: function onAddChild(parent) {
-								return _this2.setState({ isShowingModal: true, parent: parent });
+								return _this2.toggleModal(parent);
 							},
 							onClick: function onClick(nodeProps) {
 								return _this2.selectSubtree(nodeProps);
@@ -70731,28 +70877,76 @@
 					});
 				}
 			}
+
+			/**
+	   * Render the edges in the graph
+	   * @return {JSX} A set of edge components
+	   */
+
+		}, {
+			key: 'renderEdges',
+			value: function renderEdges() {
+				var _this3 = this;
+
+				var edges = [];
+				if (this.props.nodes) {
+					(function () {
+						var nodeMap = _this3.props.nodes.toJS();
+						Object.keys(nodeMap).forEach(function (key) {
+							var node = nodeMap[key];
+							if (node.edges) {
+								(function () {
+									var edgeSet = node.edges;
+									if (typeof edgeSet === 'string') {
+										edgeSet = JSON.parse(edgeSet);
+									}
+									var startX = node.x;
+									var startY = node.y;
+									edgeSet.forEach(function (edge) {
+										var child = nodeMap[edge.node];
+										if (edge.title === 'PARENT') {
+											var endX = child.x;
+											var endY = child.y;
+											edges.push(_react2.default.createElement(_components.Edge, {
+												key: '' + node.id + child.id,
+												startX: startX,
+												startY: startY,
+												endX: endX,
+												endY: endY,
+												edgeColor: '#000000'
+											}));
+										}
+									});
+								})();
+							}
+						});
+					})();
+				}
+				return edges;
+			}
 		}, {
 			key: 'render',
 			value: function render() {
-				var _this3 = this;
+				var _this4 = this;
 
 				return _react2.default.createElement(
 					'div',
 					null,
 					_react2.default.createElement(_createNodeModal2.default, {
-						isShowingModal: this.state.isShowingModal,
+						isShowingModal: this.props.showChildModal,
 						onSubmit: function onSubmit(child) {
-							return _this3.props.onAddChild(child, _this3.state.parent);
+							return _this4.props.onAddChild(child, _this4.state.parent);
 						},
 						header: 'Add a new Child',
 						onCancel: function onCancel() {
-							return _this3.setState({ isShowingModal: false });
+							return _this4.props.onClose();
 						}
 					}),
 					_react2.default.createElement(
 						_reactKonva.Stage,
 						{ width: 1000, height: 1000 },
-						this.renderGraph()
+						this.renderEdges(),
+						this.renderNodes()
 					)
 				);
 			}
@@ -70770,7 +70964,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, actions)(GraphContainer);
 
 /***/ },
-/* 347 */
+/* 348 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70779,7 +70973,7 @@
 	  value: true
 	});
 
-	var _nodes = __webpack_require__(348);
+	var _nodes = __webpack_require__(349);
 
 	Object.keys(_nodes).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -70792,7 +70986,7 @@
 	});
 
 /***/ },
-/* 348 */
+/* 349 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70800,13 +70994,13 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.getNodes = exports.selectSubtree = exports.moveNode = exports.createNode = undefined;
+	exports.addChild = exports.getNodes = exports.selectSubtree = exports.moveNode = exports.createNode = undefined;
 
 	var _types = __webpack_require__(286);
 
 	var _types2 = _interopRequireDefault(_types);
 
-	var _lib = __webpack_require__(349);
+	var _lib = __webpack_require__(350);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -70860,8 +71054,21 @@
 	  };
 	};
 
+	/**
+	 * Add the child to the parent's edge list
+	 * @param  {Object} parent The parent object
+	 * @param  {Object} child  The child object
+	 * @return {Object}        The action to be passed to the reducer
+	 */
+	var addChild = exports.addChild = function addChild(parent, child) {
+	  return {
+	    type: _types2.default.ADD_CHILD,
+	    payload: { parent: parent, child: child }
+	  };
+	};
+
 /***/ },
-/* 349 */
+/* 350 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70870,7 +71077,7 @@
 	  value: true
 	});
 
-	var _apiController = __webpack_require__(350);
+	var _apiController = __webpack_require__(351);
 
 	Object.keys(_apiController).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
@@ -70883,7 +71090,7 @@
 	});
 
 /***/ },
-/* 350 */
+/* 351 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -70891,15 +71098,17 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.fetchNodes = exports.moveNode = exports.createNode = undefined;
+	exports.addChild = exports.fetchNodes = exports.moveNode = exports.createNode = undefined;
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var _firebase = __webpack_require__(351);
+	var _firebase = __webpack_require__(352);
 
 	var _firebase2 = _interopRequireDefault(_firebase);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 	/** @type {Object} configuration for firebase */
 	var fbconf = {
@@ -70921,13 +71130,11 @@
 	var createNode = exports.createNode = function createNode(node) {
 		var topicid = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-		var newNode = node;
-		newNode.edges = JSON.stringify(node.edges);
 		var newNodeRef = void 0;
 		if (topicid == null) {
 			newNodeRef = _firebase2.default.database().ref('topics').push();
 			return newNodeRef.set({
-				nodes: [newNode]
+				nodes: _defineProperty({}, node.id, node)
 			}).then(function () {
 				return newNodeRef.key;
 			});
@@ -70935,9 +71142,9 @@
 		newNodeRef = _firebase2.default.database().ref('topics/' + topicid);
 		return newNodeRef.once('value').then(function (snapshot) {
 			var nodes = snapshot.val().nodes;
-			var newNodes = nodes.concat(newNode);
+			nodes[node.id] = node;
 			newNodeRef.set({
-				nodes: newNodes
+				nodes: nodes
 			});
 		}).then(function () {
 			return newNodeRef.key;
@@ -70955,17 +71162,11 @@
 		var newNodeRef = _firebase2.default.database().ref('topics/' + topicid);
 		return newNodeRef.once('value').then(function (snapshot) {
 			var nodes = snapshot.val().nodes;
-			var newNode = void 0;
-			var modifiedIndex = void 0;
-			nodes.forEach(function (node, index) {
-				if (node.id === nodeId) {
-					modifiedIndex = index;
-					newNode = _extends({}, node);
-					newNode.x = pos[0];
-					newNode.y = pos[1];
-				}
-			});
-			nodes[modifiedIndex] = newNode;
+			var oldNode = nodes[nodeId];
+			var newNode = _extends({}, oldNode);
+			newNode.x = pos[0];
+			newNode.y = pos[1];
+			nodes[nodeId] = newNode;
 			newNodeRef.set({
 				nodes: nodes
 			});
@@ -70987,8 +71188,50 @@
 		});
 	};
 
+	/**
+	 * Add a child to the given parent node
+	 * @param  {Object} child   The child node to be added
+	 * @param  {Object} parent  The parent to add the child node to
+	 * @param  {String} topicId the id of the topic that contains the parent node
+	 * @return {Promise}         A promise corresponding to a put and fetch event
+	 */
+	var addChild = exports.addChild = function addChild(child, parent, topicId) {
+		var getNodeRef = _firebase2.default.database().ref('topics/' + topicId);
+		return getNodeRef.once('value').then(function (snapshot) {
+			// Add the child to the parent edge set
+			var nodes = snapshot.val().nodes;
+			var parentNode = nodes[parent.id];
+			var parentEdgeSet = parentNode.edges;
+			if (!parentEdgeSet) {
+				parentEdgeSet = [];
+			}
+			parentNode.edges = parentEdgeSet.concat({
+				title: 'PARENT',
+				node: child.id
+			});
+			nodes[parent.id] = parentNode;
+			getNodeRef.set({
+				nodes: nodes
+			});
+
+			// Add the parent to the child edge set and then 
+			// add the node itself
+			var childEdgeSet = child.edges;
+			var newChild = JSON.parse(JSON.stringify(child));
+			if (!childEdgeSet) {
+				childEdgeSet = [];
+			}
+			childEdgeSet = childEdgeSet.concat({
+				title: 'CHILD',
+				node: parent.id
+			});
+			newChild.edges = childEdgeSet;
+			return createNode(newChild, topicId);
+		});
+	};
+
 /***/ },
-/* 351 */
+/* 352 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -70998,16 +71241,16 @@
 	 *
 	 *   firebase = require('firebase');
 	 */
-	var firebase = __webpack_require__(352);
-	__webpack_require__(353);
+	var firebase = __webpack_require__(353);
 	__webpack_require__(354);
 	__webpack_require__(355);
 	__webpack_require__(356);
+	__webpack_require__(357);
 	module.exports = firebase;
 
 
 /***/ },
-/* 352 */
+/* 353 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var firebase = (function(){
@@ -71047,10 +71290,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 353 */
+/* 354 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(352);
+	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(353);
 	(function(){
 	/*! @license Firebase v3.6.3
 	    Build: 3.6.3-rc.6
@@ -71273,10 +71516,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 354 */
+/* 355 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(352);
+	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(353);
 	(function(){
 	/*! @license Firebase v3.6.3
 	    Build: 3.6.3-rc.6
@@ -71544,10 +71787,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 355 */
+/* 356 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(352);
+	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(353);
 	(function(){
 	/*! @license Firebase v3.6.3
 	    Build: 3.6.3-rc.6
@@ -71604,10 +71847,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 356 */
+/* 357 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(352);
+	/* WEBPACK VAR INJECTION */(function(global) {var firebase = __webpack_require__(353);
 	(function(){
 	/*! @license Firebase v3.6.3
 	    Build: 3.6.3-rc.6
@@ -71649,7 +71892,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 357 */
+/* 358 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -71666,11 +71909,11 @@
 
 	var _reactRedux = __webpack_require__(179);
 
-	var _actions = __webpack_require__(347);
+	var _actions = __webpack_require__(348);
 
 	var actions = _interopRequireWildcard(_actions);
 
-	var _containers = __webpack_require__(358);
+	var _containers = __webpack_require__(359);
 
 	var _containers2 = _interopRequireDefault(_containers);
 
@@ -71697,11 +71940,16 @@
 		_createClass(SidebarContainer, [{
 			key: 'renderSubtree',
 			value: function renderSubtree() {
+				var _this2 = this;
+
 				// Traverse the edges in preorder and add it to an array
 				var preOrder = function preOrder(root) {
 					var subTopics = [];
 					var node = root;
-					if (node.edges.length === 0) {
+					if (typeof node.edges === 'string') {
+						node.edges = JSON.parse(node.edges);
+					}
+					if (!node.edges || node.edges.length === 0) {
 						node.depth = 0;
 						return [node];
 					}
@@ -71712,19 +71960,19 @@
 					var _loop = function _loop() {
 						// Keep track of depth
 						node = stack.pop();
-						// If we're looking at a non-root node
-						if (Object.keys(node).indexOf('node') !== -1) {
-							node = node.node;
-						}
 						var depth = node.depth;
 						subTopics.push(node);
+						if (typeof node.edges === 'string') {
+							node.edges = JSON.parse(node.edges);
+						}
 						if (node.edges.length > 0) {
-							node.edges = node.edges.reverse();
-							node.edges.forEach(function (edge) {
+							var reverseEdgeSet = JSON.parse(JSON.stringify(node.edges)).reverse();
+							reverseEdgeSet.forEach(function (edge) {
 								// We only want nodes that are children (no siblings)
 								if (edge.title === 'PARENT') {
-									edge.node.depth = depth + 1;
-									stack.push(edge);
+									var childNode = _this2.props.nodes.toJS()[edge.node];
+									childNode.depth = depth + 1;
+									stack.push(childNode);
 								}
 							});
 						}
@@ -71735,6 +71983,7 @@
 					}
 					return subTopics;
 				};
+				console.log(preOrder(this.props.subTree));
 				return preOrder(this.props.subTree).map(function (topic, index) {
 					var title = topic.title,
 					    text = topic.text,
@@ -71744,74 +71993,45 @@
 					var style = { paddingLeft: padding + 'px' };
 
 					// Base header size on depth
-					var header = void 0;
+					var size = void 0;
 					switch (depth) {
 						case 0:
 							{
-								header = _react2.default.createElement(
-									'h1',
-									null,
-									title
-								);
+								size = '35px';
 								break;
 							}
 						case 1:
 							{
-								header = _react2.default.createElement(
-									'h2',
-									null,
-									title
-								);
+								size = '30px';
 								break;
 							}
 						case 2:
 							{
-								header = _react2.default.createElement(
-									'h3',
-									null,
-									title
-								);
+								size = '25px';
 								break;
 							}
 						case 3:
 							{
-								header = _react2.default.createElement(
-									'h4',
-									null,
-									title
-								);
+								size = '20px';
 								break;
 							}
 						case 4:
 							{
-								header = _react2.default.createElement(
-									'h5',
-									null,
-									title
-								);
-								break;
-							}
-						case 5:
-							{
-								header = _react2.default.createElement(
-									'h6',
-									null,
-									title
-								);
+								size = '18px';
 								break;
 							}
 						default:
-							header = _react2.default.createElement(
-								'b',
-								null,
-								title
-							);
+							size = '18px';
 							break;
 					}
 					return _react2.default.createElement(
 						'div',
 						{ style: style, key: index },
-						header,
+						_react2.default.createElement(
+							'b',
+							{ style: { fontSize: size } },
+							title
+						),
 						_react2.default.createElement(
 							'p',
 							null,
@@ -71836,6 +72056,7 @@
 
 	var mapStateToProps = function mapStateToProps(state) {
 		return {
+			nodes: state.nodes,
 			subTree: state.subTree
 		};
 	};
@@ -71843,7 +72064,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, actions)(SidebarContainer);
 
 /***/ },
-/* 358 */
+/* 359 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -71852,14 +72073,14 @@
 	module.exports = { "sidebar": "containers__sidebar___2otx2" };
 
 /***/ },
-/* 359 */
+/* 360 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Unique ID creation requires a high quality random # generator.  We feature
 	// detect to determine the best RNG source, normalizing to a function that
 	// returns 128-bits of randomness, since that's what's usually required
-	var rng = __webpack_require__(360);
-	var bytesToUuid = __webpack_require__(361);
+	var rng = __webpack_require__(361);
+	var bytesToUuid = __webpack_require__(362);
 
 	// **`v1()` - Generate time-based UUID**
 	//
@@ -71961,7 +72182,7 @@
 
 
 /***/ },
-/* 360 */
+/* 361 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
@@ -72001,7 +72222,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 361 */
+/* 362 */
 /***/ function(module, exports) {
 
 	/**

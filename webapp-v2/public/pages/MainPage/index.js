@@ -8,7 +8,7 @@ import {
 } from './containers';
 import * as actions from '../../actions';
 
-import { createNode } from '../../lib';
+import { createNode, addChild } from '../../lib';
 import { Button } from '../../components';
 
 const uuidV1 = require('uuid/v1');
@@ -18,6 +18,7 @@ class MainPage extends Component {
 		super(props);
 		this.state = {
 			isShowingModal: false,
+			showChildModal: false
 		};
 	}
 
@@ -57,12 +58,17 @@ class MainPage extends Component {
 			id: uuidV1(),
 			...node
 		};
-		console.log('Parent', parent);
-		console.log('New Child', child);
+		this.props.addChild(parent, child);
+		const topicId = localStorage.getItem('topic_id');
+		addChild(child, parent, topicId).then(() => {
+			console.log('Hello!');
+			this.setState({
+				showChildModal: false
+			});
+		}).catch((err) => console.log('error!', err));
 	}
 
 	render() {
-		console.log('Rendered');
 		return (
 			<div className='row'>
 				<div className='three columns'>
@@ -81,6 +87,9 @@ class MainPage extends Component {
 					/>
 					<GraphContainer 
 						onAddChild={(node, parent) => this.addChild(node, parent)}
+						showChildModal={this.state.showChildModal}
+						toggleModal={() => this.setState({ showChildModal: true })}
+						onClose={() => this.setState({ showChildModal: false })}
 					/>
 				</div>
 			</div>

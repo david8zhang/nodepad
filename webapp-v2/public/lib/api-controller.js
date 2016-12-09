@@ -18,21 +18,21 @@ firebase.initializeApp(fbconf);
  * @return {Promise}        A promise corresponding to a firebase write
  */
 export const createNode = (node, topicid = null) => {
-	const newNode = node;
-	newNode.edges = JSON.stringify(node.edges);
 	let newNodeRef;
 	if (topicid == null) {
 		newNodeRef = firebase.database().ref('topics').push();
 		return newNodeRef.set({
-			nodes: [newNode]
+			nodes: {
+				[node.id]: node
+			}
 		}).then(() => newNodeRef.key);
 	}
 	newNodeRef = firebase.database().ref(`topics/${topicid}`);
 	return newNodeRef.once('value').then((snapshot) => {
 		const nodes = snapshot.val().nodes;
-		const newNodes = nodes.concat(newNode);
+		nodes[node.id] = node;
 		newNodeRef.set({
-			nodes: newNodes
+			nodes
 		});
 	}).then(() => newNodeRef.key);
 };
@@ -48,19 +48,13 @@ export const moveNode = (pos, nodeId, topicid) => {
 	const newNodeRef = firebase.database().ref(`topics/${topicid}`);
 	return newNodeRef.once('value').then((snapshot) => {
 		const nodes = snapshot.val().nodes;
-		let newNode;
-		let modifiedIndex;
-		nodes.forEach((node, index) => {
-			if (node.id === nodeId) {
-				modifiedIndex = index;
-				newNode = {
-					...node
-				};
-				newNode.x = pos[0];
-				newNode.y = pos[1];
-			}
-		});
-		nodes[modifiedIndex] = newNode;
+		const oldNode = nodes[nodeId];
+		const newNode = {
+			...oldNode
+		};
+		newNode.x = pos[0];
+		newNode.y = pos[1];
+		nodes[nodeId] = newNode;
 		newNodeRef.set({
 			nodes
 		});
@@ -79,3 +73,46 @@ export const fetchNodes = (topicId) => {
 		return nodes;
 	});
 };
+
+/**
+ * Add a child to the given parent node
+ * @param  {Object} child   The child node to be added
+ * @param  {Object} parent  The parent to add the child node to
+ * @param  {String} topicId the id of the topic that contains the parent node
+ * @return {Promise}         A promise corresponding to a put and fetch event
+ */
+export const addChild = (child, parent, topicId) => {
+	const getNodeRef = firebase.database().ref(`topics/${topicId}`);
+	return getNodeRef.once('value').then((snapshot) => {
+		// Add the child to the parent edge set
+		const nodes = snapshot.val().nodes;
+		const parentNode = nodes[parent.id];
+		let parentEdgeSet = parentNode.edges;
+		if (!parentEdgeSet) {
+			parentEdgeSet = [];
+		}
+		parentNode.edges = parentEdgeSet.concat({
+			title: 'PARENT',
+			node: child.id
+		});
+		nodes[parent.id] = parentNode;
+		getNodeRef.set({
+			nodes
+		});
+
+		// Add the parent to the child edge set and then 
+		// add the node itself
+		let childEdgeSet = child.edges;
+		const newChild = JSON.parse(JSON.stringify(child));
+		if (!childEdgeSet) {
+			childEdgeSet = [];
+		}
+		childEdgeSet = childEdgeSet.concat({
+			title: 'CHILD',
+			node: parent.id
+		});
+		newChild.edges = childEdgeSet;
+		return createNode(newChild, topicId);
+	});
+};
+

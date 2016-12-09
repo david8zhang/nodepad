@@ -50,3 +50,16 @@ export const getNodes = (topicId) => {
 		payload: request
 	};
 };
+
+/**
+ * Add the child to the parent's edge list
+ * @param  {Object} parent The parent object
+ * @param  {Object} child  The child object
+ * @return {Object}        The action to be passed to the reducer
+ */
+export const addChild = (parent, child) => (
+	{
+		type: types.ADD_CHILD,
+		payload: { parent, child }
+	}
+);

@@ -10,7 +10,10 @@ class SidebarContainer extends Component {
 		const preOrder = (root) => {
 			const subTopics = [];
 			let node = root;
-			if (node.edges.length === 0) {
+			if (typeof node.edges === 'string') {
+				node.edges = JSON.parse(node.edges);
+			}
+			if (!node.edges || node.edges.length === 0) {
 				node.depth = 0;
 				return [node];
 			}
@@ -20,64 +23,63 @@ class SidebarContainer extends Component {
 			while (stack.length !== 0) {
 				// Keep track of depth
 				node = stack.pop();
-				// If we're looking at a non-root node
-				if (Object.keys(node).indexOf('node') !== -1) {
-					node = node.node;
-				}
 				const depth = node.depth;
 				subTopics.push(node);
+				if (typeof node.edges === 'string') {
+					node.edges = JSON.parse(node.edges);
+				}
 				if (node.edges.length > 0) {
-					node.edges = node.edges.reverse();
-					node.edges.forEach((edge) => {
+					const reverseEdgeSet = JSON.parse(JSON.stringify(node.edges)).reverse();
+					reverseEdgeSet.forEach((edge) => {
 						// We only want nodes that are children (no siblings)
 						if (edge.title === 'PARENT') {
-							edge.node.depth = depth + 1;
-							stack.push(edge);
+							const childNode = this.props.nodes.toJS()[edge.node];
+							childNode.depth = depth + 1;
+							stack.push(childNode);
 						}
 					});
 				} 			
 			}
 			return subTopics;
 		};
+		console.log(preOrder(this.props.subTree));
 		return preOrder(this.props.subTree).map((topic, index) => {
 			const { title, text, depth } = topic;
 			const padding = depth * 10;
 			const style = { paddingLeft: `${padding}px` };
 
 			// Base header size on depth
-			let header;
+			let size;
 			switch (depth) {
 				case 0: {
-					header = <h1>{title}</h1>;
+					size = '35px';
 					break;
 				}
 				case 1: {
-					header = <h2>{title}</h2>;
+					size = '30px';
 					break;					
 				}
 				case 2: {
-					header = <h3>{title}</h3>;
+					size = '25px';
 					break;
 				}
 				case 3: {
-					header = <h4>{title}</h4>;
+					size = '20px';
 					break;
 				}
 				case 4: {
-					header = <h5>{title}</h5>;
-					break;
-				}
-				case 5: {
-					header = <h6>{title}</h6>;
+					size = '18px';
 					break;
 				}
 				default:
-					header = <b>{title}</b>;
+					size = '18px';
 					break;
 			}
 			return (
 				<div style={style} key={index}>
-					{header}
+					<b style={{ fontSize: size }}>
+						{title}
+					</b>
 					<p>{text}</p>
 				</div>
 			);
@@ -98,6 +100,7 @@ class SidebarContainer extends Component {
 
 const mapStateToProps = (state) => (
 	{
+		nodes: state.nodes,
 		subTree: state.subTree
 	}
 );
