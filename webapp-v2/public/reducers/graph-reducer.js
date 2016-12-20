@@ -47,6 +47,34 @@ export default (state = initialState, action) => {
 			child.edges = childEdgeSet;
 			return newState.set(child.id, child);
 		}
+		case types.ADD_RELATIONSHIP: {
+			const { srcId, dest } = action.payload;
+
+			// Add a new edge to both the source and edge set
+			const srcNode = JSON.parse(JSON.stringify(state.toJS()[srcId]));
+			let srcNodeEdgeSet = srcNode.edges;
+			if (!srcNode.edges) {
+				srcNodeEdgeSet = [];
+			}
+			srcNodeEdgeSet = srcNodeEdgeSet.concat({
+				title: 'RELATION',
+				node: dest.id
+			});
+			srcNode.edges = srcNodeEdgeSet;
+			const newState = state.update(srcId, () => srcNode);
+
+			// Add a new edge to the dest edge set
+			let destEdgeSet = dest.edges;
+			if (!destEdgeSet) {
+				destEdgeSet = [];
+			}
+			destEdgeSet = destEdgeSet.concat({
+				title: 'RELATION DEST',
+				node: srcId
+			});
+			dest.edges = destEdgeSet;
+			return newState.set(dest.id, dest);
+		}
 		default:
 			return state;
 	}

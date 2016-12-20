@@ -29764,6 +29764,15 @@
 	  }
 	});
 
+	var _relationshipReducer = __webpack_require__(363);
+
+	Object.defineProperty(exports, 'relationshipReducer', {
+	  enumerable: true,
+	  get: function get() {
+	    return _interopRequireDefault(_relationshipReducer).default;
+	  }
+	});
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /***/ },
@@ -29786,11 +29795,16 @@
 
 	var _sidebarReducer2 = _interopRequireDefault(_sidebarReducer);
 
+	var _relationshipReducer = __webpack_require__(363);
+
+	var _relationshipReducer2 = _interopRequireDefault(_relationshipReducer);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	exports.default = (0, _redux.combineReducers)({
 		nodes: _graphReducer2.default,
-		subTree: _sidebarReducer2.default
+		subTree: _sidebarReducer2.default,
+		relSrcId: _relationshipReducer2.default
 	});
 
 /***/ },
@@ -29884,6 +29898,46 @@
 					}();
 
 					if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+				}
+			case _types2.default.ADD_RELATIONSHIP:
+				{
+					var _ret3 = function () {
+						var _action$payload2 = action.payload,
+						    srcId = _action$payload2.srcId,
+						    dest = _action$payload2.dest;
+
+						// Add a new edge to both the source and edge set
+
+						var srcNode = JSON.parse(JSON.stringify(state.toJS()[srcId]));
+						var srcNodeEdgeSet = srcNode.edges;
+						if (!srcNode.edges) {
+							srcNodeEdgeSet = [];
+						}
+						srcNodeEdgeSet = srcNodeEdgeSet.concat({
+							title: 'RELATION',
+							node: dest.id
+						});
+						srcNode.edges = srcNodeEdgeSet;
+						var newState = state.update(srcId, function () {
+							return srcNode;
+						});
+
+						// Add a new edge to the dest edge set
+						var destEdgeSet = dest.edges;
+						if (!destEdgeSet) {
+							destEdgeSet = [];
+						}
+						destEdgeSet = destEdgeSet.concat({
+							title: 'RELATION DEST',
+							node: srcId
+						});
+						dest.edges = destEdgeSet;
+						return {
+							v: newState.set(dest.id, dest)
+						};
+					}();
+
+					if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
 				}
 			default:
 				return state;
@@ -34888,13 +34942,21 @@
 	var SELECT_SUBTREE = 'SELECT_SUBTREE';
 	var FETCH_NODES = 'FETCH_NODES';
 	var ADD_CHILD = 'ADD_CHILD';
+	var ADD_RELATIONSHIP = 'ADD_RELATIONSHIP';
+	var ADD_REL_SRC = 'ADD_REL_SRC';
+	var CLEAR_SRC_ID = 'CLEAR_SRC_ID';
+	var DELETE_NODE = 'DELETE_NODE';
 
 	exports.default = {
 		CREATE_NODE: CREATE_NODE,
 		MOVE_NODE: MOVE_NODE,
 		SELECT_SUBTREE: SELECT_SUBTREE,
 		FETCH_NODES: FETCH_NODES,
-		ADD_CHILD: ADD_CHILD
+		ADD_CHILD: ADD_CHILD,
+		ADD_RELATIONSHIP: ADD_RELATIONSHIP,
+		ADD_REL_SRC: ADD_REL_SRC,
+		CLEAR_SRC_ID: CLEAR_SRC_ID,
+		DELETE_NODE: DELETE_NODE
 	};
 
 /***/ },
@@ -35033,7 +35095,6 @@
 				this.props.addChild(parent, child);
 				var topicId = localStorage.getItem('topic_id');
 				(0, _lib.addChild)(child, parent, topicId).then(function () {
-					console.log('Hello!');
 					_this3.setState({
 						showChildModal: false
 					});
@@ -53611,10 +53672,20 @@
 			value: function render() {
 				var _this2 = this;
 
+				// Truncate the text if it's longer than 15 characters long
 				var truncated = this.props.text;
 				if (this.props.text.length > 15) {
 					truncated = this.props.text.substring(0, 10);
 					truncated += '...';
+				}
+
+				// Set the color of the current relSrc to red, indicating that
+				// another click on it will cancel the relationship
+				var relSrcColor = '#2ecc71';
+				var nodeOutline = this.props.nodeOutline;
+				if (this.props.isRelSrc) {
+					relSrcColor = '#e74c3c';
+					nodeOutline = '#3498db';
 				}
 				return _react2.default.createElement(
 					_reactKonva.Layer,
@@ -53648,7 +53719,7 @@
 							fill: this.props.nodeColor,
 							x: 0,
 							y: 0,
-							stroke: this.props.nodeOutline
+							stroke: nodeOutline
 						}),
 						_react2.default.createElement(_reactKonva.Text, {
 							ref: 'text ' + this.props.id,
@@ -53657,17 +53728,32 @@
 							text: truncated,
 							fill: this.state.updated ? this.props.textColor : '#ffffff'
 						}),
-						this.state.highlight && _react2.default.createElement(_reactKonva.Circle, {
-							onClick: function onClick() {
-								return _this2.props.onAddChild(_this2.props);
-							},
-							ref: 'button ' + this.props.id,
-							x: 0,
-							y: 50,
-							fill: '#dddddd',
-							stroke: this.props.nodeOutline,
-							radius: 25
-						})
+						this.state.highlight && _react2.default.createElement(
+							_reactKonva.Group,
+							null,
+							_react2.default.createElement(_reactKonva.Circle, {
+								onClick: function onClick() {
+									return _this2.props.onAddChild(_this2.props);
+								},
+								ref: 'button ' + this.props.id,
+								x: 0,
+								y: 70,
+								fill: '#33C3F0',
+								stroke: this.props.nodeOutline,
+								radius: 25
+							}),
+							_react2.default.createElement(_reactKonva.Circle, {
+								onClick: function onClick() {
+									return _this2.props.onAddRelation(_this2.props, _this2.props.isRelSrc);
+								},
+								ref: 'addRel ' + this.props.id,
+								x: 70,
+								y: 0,
+								fill: relSrcColor,
+								stroke: this.props.nodeOutline,
+								radius: 25
+							})
+						)
 					)
 				);
 			}
@@ -70534,7 +70620,12 @@
 			key: 'render',
 			value: function render() {
 				var points = [this.props.startX, this.props.startY, this.props.endX, this.props.endY];
-				console.log(points);
+				var dash = [];
+				var edgeColor = this.props.edgeColor;
+				if (this.props.dash) {
+					dash = [5, 5];
+					edgeColor = '#bdc3c7';
+				}
 				return _react2.default.createElement(
 					_reactKonva.Layer,
 					null,
@@ -70543,8 +70634,9 @@
 						null,
 						_react2.default.createElement(_reactKonva.Line, {
 							points: points,
-							stroke: this.props.edgeColor,
-							strokeWidth: 2
+							stroke: edgeColor,
+							strokeWidth: 2,
+							dash: dash
 						})
 					)
 				);
@@ -70788,19 +70880,22 @@
 					this.props.getNodes(topicId);
 				}
 			}
+
 			/**
-	   * Update the node's position in redux and firebase
-	   * @param  {Array} pos    [x, y] position of the node
-	   * @param  {String} nodeId the id of the node
-	   * @return {None}        
+	   * Set the relationship src node
+	   * @param {Object} src The source node for the relationship pairing
 	   */
 
 		}, {
-			key: 'moveNode',
-			value: function moveNode(pos, nodeId) {
-				this.props.moveNode(pos, nodeId);
-				var topicId = localStorage.getItem('topic_id');
-				(0, _lib.moveNode)(pos, nodeId, topicId);
+			key: 'setRelSrc',
+			value: function setRelSrc(src, isRelSrc) {
+				var id = src.id;
+
+				if (isRelSrc) {
+					this.props.clearSrcId();
+				} else {
+					this.props.addRelSrc(id);
+				}
 			}
 
 			/**
@@ -70812,6 +70907,8 @@
 		}, {
 			key: 'selectSubtree',
 			value: function selectSubtree(nodeProps) {
+				var _this2 = this;
+
 				var text = nodeProps.text,
 				    extra = nodeProps.extra,
 				    x = nodeProps.x,
@@ -70831,12 +70928,43 @@
 					id: id
 				};
 				this.props.selectSubtree(selectedNode);
+
+				// If there is a relSrcId, and it does not match
+				// the id of the currently selected node, add a relationship edge
+				if (this.props.relSrcId) {
+					if (this.props.relSrcId !== id) {
+						this.props.addRelationship(this.props.relSrcId, selectedNode);
+						var topicId = localStorage.getItem('topic_id');
+						(0, _lib.addRelationship)(this.props.relSrcId, selectedNode, topicId).then(function () {
+							console.log('Added relationship between ' + _this2.props.relSrcId + ' and ' + selectedNode.id);
+							_this2.props.clearSrcId();
+						});
+					}
+				}
 			}
+
+			// Toggle the modal of the graph contianer
+
 		}, {
 			key: 'toggleModal',
 			value: function toggleModal(parent) {
 				this.setState({ parent: parent });
 				this.props.toggleModal();
+			}
+
+			/**
+	   * Update the node's position in redux and firebase
+	   * @param  {Array} pos    [x, y] position of the node
+	   * @param  {String} nodeId the id of the node
+	   * @return {None}        
+	   */
+
+		}, {
+			key: 'moveNode',
+			value: function moveNode(pos, nodeId) {
+				this.props.moveNode(pos, nodeId);
+				var topicId = localStorage.getItem('topic_id');
+				(0, _lib.moveNode)(pos, nodeId, topicId);
 			}
 
 			/**
@@ -70847,25 +70975,29 @@
 		}, {
 			key: 'renderNodes',
 			value: function renderNodes() {
-				var _this2 = this;
+				var _this3 = this;
 
 				if (this.props.nodes) {
 					return Object.keys(this.props.nodes.toJS()).map(function (key) {
-						var node = _this2.props.nodes.toJS()[key];
+						var node = _this3.props.nodes.toJS()[key];
 						return _react2.default.createElement(_components.Node, {
 							key: node.id,
 							id: node.id,
 							size: 50,
 							x: node.x,
 							y: node.y,
+							isRelSrc: node.id === _this3.props.relSrcId,
+							onAddRelation: function onAddRelation(src, isRelSrc) {
+								return _this3.setRelSrc(src, isRelSrc);
+							},
 							onAddChild: function onAddChild(parent) {
-								return _this2.toggleModal(parent);
+								return _this3.toggleModal(parent);
 							},
 							onClick: function onClick(nodeProps) {
-								return _this2.selectSubtree(nodeProps);
+								return _this3.selectSubtree(nodeProps);
 							},
 							dragNode: function dragNode(pos) {
-								return _this2.moveNode(pos, node.id);
+								return _this3.moveNode(pos, node.id);
 							},
 							nodeOutline: '#000000',
 							nodeColor: '#ffffff',
@@ -70886,12 +71018,12 @@
 		}, {
 			key: 'renderEdges',
 			value: function renderEdges() {
-				var _this3 = this;
+				var _this4 = this;
 
 				var edges = [];
 				if (this.props.nodes) {
 					(function () {
-						var nodeMap = _this3.props.nodes.toJS();
+						var nodeMap = _this4.props.nodes.toJS();
 						Object.keys(nodeMap).forEach(function (key) {
 							var node = nodeMap[key];
 							if (node.edges) {
@@ -70904,15 +71036,25 @@
 									var startY = node.y;
 									edgeSet.forEach(function (edge) {
 										var child = nodeMap[edge.node];
+										var endX = child.x;
+										var endY = child.y;
 										if (edge.title === 'PARENT') {
-											var endX = child.x;
-											var endY = child.y;
 											edges.push(_react2.default.createElement(_components.Edge, {
 												key: '' + node.id + child.id,
 												startX: startX,
 												startY: startY,
 												endX: endX,
 												endY: endY,
+												edgeColor: '#000000'
+											}));
+										} else if (edge.title === 'RELATION') {
+											edges.push(_react2.default.createElement(_components.Edge, {
+												key: '' + node.id + child.id,
+												startX: startX,
+												startY: startY,
+												endX: endX,
+												endY: endY,
+												dash: true,
 												edgeColor: '#000000'
 											}));
 										}
@@ -70927,19 +71069,20 @@
 		}, {
 			key: 'render',
 			value: function render() {
-				var _this4 = this;
+				var _this5 = this;
 
+				console.log(this.props.relSrcId);
 				return _react2.default.createElement(
 					'div',
 					null,
 					_react2.default.createElement(_createNodeModal2.default, {
 						isShowingModal: this.props.showChildModal,
 						onSubmit: function onSubmit(child) {
-							return _this4.props.onAddChild(child, _this4.state.parent);
+							return _this5.props.onAddChild(child, _this5.state.parent);
 						},
 						header: 'Add a new Child',
 						onCancel: function onCancel() {
-							return _this4.props.onClose();
+							return _this5.props.onClose();
 						}
 					}),
 					_react2.default.createElement(
@@ -70957,7 +71100,8 @@
 
 	var mapStateToProps = function mapStateToProps(state) {
 		return {
-			nodes: state.nodes
+			nodes: state.nodes,
+			relSrcId: state.relSrcId
 		};
 	};
 
@@ -70992,9 +71136,9 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	  value: true
+		value: true
 	});
-	exports.addChild = exports.getNodes = exports.selectSubtree = exports.moveNode = exports.createNode = undefined;
+	exports.addRelationship = exports.clearSrcId = exports.addRelSrc = exports.deleteNode = exports.addChild = exports.getNodes = exports.selectSubtree = exports.moveNode = exports.createNode = undefined;
 
 	var _types = __webpack_require__(286);
 
@@ -71010,10 +71154,10 @@
 	 * @return {Object}      An action to be handed to the reducer
 	 */
 	var createNode = exports.createNode = function createNode(node) {
-	  return {
-	    type: _types2.default.CREATE_NODE,
-	    payload: node
-	  };
+		return {
+			type: _types2.default.CREATE_NODE,
+			payload: node
+		};
 	};
 
 	/**
@@ -71023,10 +71167,10 @@
 	 * @return {Object}        An object to be passed to reducer
 	 */
 	var moveNode = exports.moveNode = function moveNode(pos, nodeId) {
-	  return {
-	    type: _types2.default.MOVE_NODE,
-	    payload: { pos: pos, nodeId: nodeId }
-	  };
+		return {
+			type: _types2.default.MOVE_NODE,
+			payload: { pos: pos, nodeId: nodeId }
+		};
 	};
 
 	/**
@@ -71035,10 +71179,10 @@
 	 * @return {None}      
 	 */
 	var selectSubtree = exports.selectSubtree = function selectSubtree(node) {
-	  return {
-	    type: _types2.default.SELECT_SUBTREE,
-	    payload: node
-	  };
+		return {
+			type: _types2.default.SELECT_SUBTREE,
+			payload: node
+		};
 	};
 
 	/**
@@ -71047,11 +71191,11 @@
 	 * @return {Object}         The action to be passed to the reducer
 	 */
 	var getNodes = exports.getNodes = function getNodes(topicId) {
-	  var request = (0, _lib.fetchNodes)(topicId);
-	  return {
-	    type: _types2.default.FETCH_NODES,
-	    payload: request
-	  };
+		var request = (0, _lib.fetchNodes)(topicId);
+		return {
+			type: _types2.default.FETCH_NODES,
+			payload: request
+		};
 	};
 
 	/**
@@ -71061,10 +71205,57 @@
 	 * @return {Object}        The action to be passed to the reducer
 	 */
 	var addChild = exports.addChild = function addChild(parent, child) {
-	  return {
-	    type: _types2.default.ADD_CHILD,
-	    payload: { parent: parent, child: child }
-	  };
+		return {
+			type: _types2.default.ADD_CHILD,
+			payload: { parent: parent, child: child }
+		};
+	};
+
+	/**
+	 * Delete the node corresponding to that id
+	 * @param  {String} id The id of the node
+	 * @return {Object}    An action to be passed to reducer
+	 */
+	var deleteNode = exports.deleteNode = function deleteNode(id) {
+		return {
+			type: _types2.default.DELETE_NODE,
+			payload: { id: id }
+		};
+	};
+
+	/**
+	 * Set the source node in a relationship between two non-related nodes
+	 * @param {String} id The id of the source node
+	 */
+	var addRelSrc = exports.addRelSrc = function addRelSrc(id) {
+		return {
+			type: _types2.default.ADD_REL_SRC,
+			payload: { id: id }
+		};
+	};
+
+	/**
+	 * Clear the current source ide
+	 * @return {Object} An empty payload
+	 */
+	var clearSrcId = exports.clearSrcId = function clearSrcId() {
+		return {
+			type: _types2.default.CLEAR_SRC_ID,
+			payload: {}
+		};
+	};
+
+	/**
+	 * Add a relationship between the source and destination nodes
+	 * @param  {Object} src  The source node
+	 * @param  {Object} dest The destination node
+	 * @return {Object}      The action to be passed to the reducer
+	 */
+	var addRelationship = exports.addRelationship = function addRelationship(srcId, dest) {
+		return {
+			type: _types2.default.ADD_RELATIONSHIP,
+			payload: { srcId: srcId, dest: dest }
+		};
 	};
 
 /***/ },
@@ -71098,7 +71289,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.addChild = exports.fetchNodes = exports.moveNode = exports.createNode = undefined;
+	exports.addRelationship = exports.addChild = exports.fetchNodes = exports.moveNode = exports.createNode = undefined;
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -71227,6 +71418,47 @@
 			});
 			newChild.edges = childEdgeSet;
 			return createNode(newChild, topicId);
+		});
+	};
+
+	/**
+	 * Add an arbitrary relationship between the given src and dest nodes
+	 * @param  {Object} src     The source node
+	 * @param  {Object} dest    The destination node
+	 * @param  {String} topicId The topic that all these nodes belong to
+	 * @return {Promise}         A promise corresponding to a put and fetch event
+	 */
+	var addRelationship = exports.addRelationship = function addRelationship(srcId, dest, topicId) {
+		var getNodeRef = _firebase2.default.database().ref('topics/' + topicId);
+		return getNodeRef.once('value').then(function (snapshot) {
+			var nodes = snapshot.val().nodes;
+			var srcNode = nodes[srcId];
+			var destNode = nodes[dest.id];
+
+			// Add the edge to the src edge set
+			var srcEdgeSet = srcNode.edges;
+			if (!srcEdgeSet) {
+				srcEdgeSet = [];
+			}
+			srcNode.edges = srcEdgeSet.concat({
+				title: 'RELATION',
+				node: dest.id
+			});
+			nodes[srcId] = srcNode;
+
+			// Add the edge to the dest edge set
+			var destEdgeSet = destNode.edges;
+			if (!destEdgeSet) {
+				destEdgeSet = [];
+			}
+			destNode.edges = destEdgeSet.concat({
+				title: 'RELATION DEST',
+				node: dest.id
+			});
+			nodes[dest.id] = destNode;
+			getNodeRef.set({
+				nodes: nodes
+			});
 		});
 	};
 
@@ -71983,7 +72215,6 @@
 					}
 					return subTopics;
 				};
-				console.log(preOrder(this.props.subTree));
 				return preOrder(this.props.subTree).map(function (topic, index) {
 					var title = topic.title,
 					    text = topic.text,
@@ -72249,6 +72480,40 @@
 
 	module.exports = bytesToUuid;
 
+
+/***/ },
+/* 363 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _types = __webpack_require__(286);
+
+	var _types2 = _interopRequireDefault(_types);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = function () {
+		var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+		var action = arguments[1];
+
+		switch (action.type) {
+			case _types2.default.ADD_REL_SRC:
+				{
+					return action.payload.id;
+				}
+			case _types2.default.CLEAR_SRC_ID:
+				{
+					return null;
+				}
+			default:
+				return state;
+		}
+	};
 
 /***/ }
 /******/ ]);

@@ -116,3 +116,43 @@ export const addChild = (child, parent, topicId) => {
 	});
 };
 
+/**
+ * Add an arbitrary relationship between the given src and dest nodes
+ * @param  {Object} src     The source node
+ * @param  {Object} dest    The destination node
+ * @param  {String} topicId The topic that all these nodes belong to
+ * @return {Promise}         A promise corresponding to a put and fetch event
+ */
+export const addRelationship = (srcId, dest, topicId) => {
+	const getNodeRef = firebase.database().ref(`topics/${topicId}`);
+	return getNodeRef.once('value').then((snapshot) => {
+		const nodes = snapshot.val().nodes;
+		const srcNode = nodes[srcId];
+		const destNode = nodes[dest.id];
+
+		// Add the edge to the src edge set
+		let srcEdgeSet = srcNode.edges;
+		if (!srcEdgeSet) {
+			srcEdgeSet = [];
+		}
+		srcNode.edges = srcEdgeSet.concat({
+			title: 'RELATION',
+			node: dest.id
+		});
+		nodes[srcId] = srcNode;
+
+		// Add the edge to the dest edge set
+		let destEdgeSet = destNode.edges;
+		if (!destEdgeSet) {
+			destEdgeSet = [];
+		}
+		destNode.edges = destEdgeSet.concat({
+			title: 'RELATION DEST',
+			node: dest.id
+		});
+		nodes[dest.id] = destNode;
+		getNodeRef.set({
+			nodes
+		});
+	});
+}

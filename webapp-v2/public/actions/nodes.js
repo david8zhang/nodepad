@@ -63,3 +63,51 @@ export const addChild = (parent, child) => (
 		payload: { parent, child }
 	}
 );
+
+
+/**
+ * Delete the node corresponding to that id
+ * @param  {String} id The id of the node
+ * @return {Object}    An action to be passed to reducer
+ */
+export const deleteNode = (id) => (
+	{
+		type: types.DELETE_NODE,
+		payload: { id }
+	}
+);
+		
+/**
+ * Set the source node in a relationship between two non-related nodes
+ * @param {String} id The id of the source node
+ */
+export const addRelSrc = (id) => (
+	{
+		type: types.ADD_REL_SRC,
+		payload: { id }
+	}
+);
+
+/**
+ * Clear the current source ide
+ * @return {Object} An empty payload
+ */
+export const clearSrcId = () => (
+	{
+		type: types.CLEAR_SRC_ID,
+		payload: {}
+	}
+);
+
+/**
+ * Add a relationship between the source and destination nodes
+ * @param  {Object} src  The source node
+ * @param  {Object} dest The destination node
+ * @return {Object}      The action to be passed to the reducer
+ */
+export const addRelationship = (srcId, dest) => (
+	{
+		type: types.ADD_RELATIONSHIP,
+		payload: { srcId, dest }
+	}
+);

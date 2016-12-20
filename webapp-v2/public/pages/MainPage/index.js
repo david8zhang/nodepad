@@ -7,8 +7,11 @@ import {
 	SidebarContainer
 } from './containers';
 import * as actions from '../../actions';
-
-import { createNode, addChild } from '../../lib';
+import { 
+	createNode, 
+	addChild,
+	addRelationship 
+} from '../../lib';
 import { Button } from '../../components';
 
 const uuidV1 = require('uuid/v1');
@@ -61,7 +64,6 @@ class MainPage extends Component {
 		this.props.addChild(parent, child);
 		const topicId = localStorage.getItem('topic_id');
 		addChild(child, parent, topicId).then(() => {
-			console.log('Hello!');
 			this.setState({
 				showChildModal: false
 			});

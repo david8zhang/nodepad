@@ -3,10 +3,9 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Stage } from 'react-konva';
 import * as actions from '../../../actions';
-import { moveNode } from '../../../lib';
+import { moveNode, addRelationship } from '../../../lib';
 import CreateNodeModal from './createNodeModal';
 import { Node, Edge } from '../../../components';
-
 
 class GraphContainer extends Component {
 	constructor(props) {
@@ -23,16 +22,18 @@ class GraphContainer extends Component {
 			this.props.getNodes(topicId);
 		}
 	}
+
 	/**
-	 * Update the node's position in redux and firebase
-	 * @param  {Array} pos    [x, y] position of the node
-	 * @param  {String} nodeId the id of the node
-	 * @return {None}        
+	 * Set the relationship src node
+	 * @param {Object} src The source node for the relationship pairing
 	 */
-	moveNode(pos, nodeId) {
-		this.props.moveNode(pos, nodeId);
-		const topicId = localStorage.getItem('topic_id');
-		moveNode(pos, nodeId, topicId);
+	setRelSrc(src, isRelSrc) {
+		const { id } = src;
+		if (isRelSrc) {
+			this.props.clearSrcId();
+		} else {
+			this.props.addRelSrc(id);
+		}
 	}
 
 	/**
@@ -55,11 +56,37 @@ class GraphContainer extends Component {
 			id
 		};
 		this.props.selectSubtree(selectedNode);
+
+		// If there is a relSrcId, and it does not match
+		// the id of the currently selected node, add a relationship edge
+		if (this.props.relSrcId) {
+			if (this.props.relSrcId !== id) {
+				this.props.addRelationship(this.props.relSrcId, selectedNode);
+				const topicId = localStorage.getItem('topic_id');
+				addRelationship(this.props.relSrcId, selectedNode, topicId).then(() => {
+					console.log(`Added relationship between ${this.props.relSrcId} and ${selectedNode.id}`);
+					this.props.clearSrcId();
+				});
+			}
+		}
 	}
 
+	// Toggle the modal of the graph contianer
 	toggleModal(parent) {
 		this.setState({ parent });
 		this.props.toggleModal();
+	}
+
+	/**
+	 * Update the node's position in redux and firebase
+	 * @param  {Array} pos    [x, y] position of the node
+	 * @param  {String} nodeId the id of the node
+	 * @return {None}        
+	 */
+	moveNode(pos, nodeId) {
+		this.props.moveNode(pos, nodeId);
+		const topicId = localStorage.getItem('topic_id');
+		moveNode(pos, nodeId, topicId);
 	}
 
 	/**
@@ -77,6 +104,8 @@ class GraphContainer extends Component {
 						size={50}
 						x={node.x}
 						y={node.y}
+						isRelSrc={node.id === this.props.relSrcId}
+						onAddRelation={(src, isRelSrc) => this.setRelSrc(src, isRelSrc)}
 						onAddChild={(parent) => this.toggleModal(parent)}
 						onClick={(nodeProps) => this.selectSubtree(nodeProps)}
 						dragNode={(pos) => this.moveNode(pos, node.id)}
@@ -111,9 +140,9 @@ class GraphContainer extends Component {
 					const startY = node.y;
 					edgeSet.forEach((edge) => {
 						const child = nodeMap[edge.node];
+						const endX = child.x;
+						const endY = child.y;
 						if (edge.title === 'PARENT') {
-							const endX = child.x;
-							const endY = child.y;
 							edges.push(
 								<Edge
 									key={`${node.id}${child.id}`}
@@ -121,6 +150,18 @@ class GraphContainer extends Component {
 									startY={startY}
 									endX={endX}
 									endY={endY}
+									edgeColor='#000000'
+								/>
+							);
+						} else if (edge.title === 'RELATION') {
+							edges.push(
+								<Edge
+									key={`${node.id}${child.id}`}
+									startX={startX}
+									startY={startY}
+									endX={endX}
+									endY={endY}
+									dash
 									edgeColor='#000000'
 								/>
 							);
@@ -133,6 +174,7 @@ class GraphContainer extends Component {
 	}
 
 	render() {
+		console.log(this.props.relSrcId);
 		return (
 			<div>
 				<CreateNodeModal 
@@ -152,7 +194,8 @@ class GraphContainer extends Component {
 
 const mapStateToProps = (state) => (
 	{
-		nodes: state.nodes
+		nodes: state.nodes,
+		relSrcId: state.relSrcId
 	}
 );
 

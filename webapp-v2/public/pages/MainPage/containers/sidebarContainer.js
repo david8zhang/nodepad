@@ -42,7 +42,6 @@ class SidebarContainer extends Component {
 			}
 			return subTopics;
 		};
-		console.log(preOrder(this.props.subTree));
 		return preOrder(this.props.subTree).map((topic, index) => {
 			const { title, text, depth } = topic;
 			const padding = depth * 10;

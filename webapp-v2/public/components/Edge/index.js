@@ -9,14 +9,20 @@ class Edge extends Component {
 			this.props.endX,
 			this.props.endY
 		];
-		console.log(points);
+		let dash = [];
+		let edgeColor = this.props.edgeColor;
+		if (this.props.dash) {
+			dash = [5, 5];
+			edgeColor = '#bdc3c7';
+		}
 		return (
 			<Layer>
 				<Group>
 					<Line 
 						points={points} 
-						stroke={this.props.edgeColor}
+						stroke={edgeColor}
 						strokeWidth={2}
+						dash={dash}
 					/>
 				</Group>
 			</Layer>

@@ -54,10 +54,20 @@ class Node extends Component {
 	}
 
 	render() {
+		// Truncate the text if it's longer than 15 characters long
 		let truncated = this.props.text;
 		if (this.props.text.length > 15) {
 			truncated = this.props.text.substring(0, 10);
 			truncated += '...';
+		}
+
+		// Set the color of the current relSrc to red, indicating that
+		// another click on it will cancel the relationship
+		let relSrcColor = '#2ecc71';
+		let nodeOutline = this.props.nodeOutline;
+		if (this.props.isRelSrc) {
+			relSrcColor = '#e74c3c';
+			nodeOutline = '#3498db';
 		}
 		return (
 			<Layer>
@@ -78,7 +88,7 @@ class Node extends Component {
 						fill={this.props.nodeColor}
 						x={0}
 						y={0}
-						stroke={this.props.nodeOutline}
+						stroke={nodeOutline}
 					/>
 					<Text 
 						ref={`text ${this.props.id}`}
@@ -89,15 +99,27 @@ class Node extends Component {
 					/>
 					{
 						this.state.highlight &&
-						<Circle
-							onClick={() => this.props.onAddChild(this.props)}
-							ref={`button ${this.props.id}`}
-							x={0}
-							y={50}
-							fill='#dddddd'
-							stroke={this.props.nodeOutline}
-							radius={25}
-						/>
+						<Group>
+							<Circle
+								onClick={() => this.props.onAddChild(this.props)}
+								ref={`button ${this.props.id}`}
+								x={0}
+								y={70}
+								fill='#33C3F0'
+								stroke={this.props.nodeOutline}
+								radius={25}
+							/>
+							<Circle
+								onClick={() => this.props.onAddRelation(this.props, this.props.isRelSrc)}
+								ref={`addRel ${this.props.id}`}
+								x={70}
+								y={0}
+								fill={relSrcColor}
+								stroke={this.props.nodeOutline}
+								radius={25}
+							/>
+						</Group>
+
 					}
 				</Group>
 			</Layer>
