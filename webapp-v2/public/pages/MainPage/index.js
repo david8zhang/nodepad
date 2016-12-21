@@ -10,7 +10,7 @@ import * as actions from '../../actions';
 import { 
 	createNode, 
 	addChild,
-	addRelationship 
+	deleteNode
 } from '../../lib';
 import { Button } from '../../components';
 
@@ -70,6 +70,21 @@ class MainPage extends Component {
 		}).catch((err) => console.log('error!', err));
 	}
 
+	/**
+	 * Delete a node and all edges connecting to it
+	 * @param  {Object} node The node to be deleted
+	 * @return {None}
+	 */
+	deleteNode(node) {
+		const { id } = node;
+		this.props.deleteNode(id);
+		const topicId = localStorage.getItem('topic_id');
+		deleteNode(node, topicId).then((res) => {
+			console.log(res);
+		})
+		.catch((err) => console.log('Error!', err));
+	}
+
 	render() {
 		return (
 			<div className='row'>
@@ -88,6 +103,7 @@ class MainPage extends Component {
 						onCancel={() => this.setState({ isShowingModal: false })}
 					/>
 					<GraphContainer 
+						onDelete={(node) => this.deleteNode(node)}
 						onAddChild={(node, parent) => this.addChild(node, parent)}
 						showChildModal={this.state.showChildModal}
 						toggleModal={() => this.setState({ showChildModal: true })}

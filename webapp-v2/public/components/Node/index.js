@@ -106,7 +106,7 @@ class Node extends Component {
 								x={0}
 								y={70}
 								fill='#33C3F0'
-								stroke={this.props.nodeOutline}
+								stroke={nodeOutline}
 								radius={25}
 							/>
 							<Circle
@@ -115,7 +115,16 @@ class Node extends Component {
 								x={70}
 								y={0}
 								fill={relSrcColor}
-								stroke={this.props.nodeOutline}
+								stroke={nodeOutline}
+								radius={25}
+							/>
+							<Circle
+								onClick={() => this.props.onDelete(this.props)}
+								ref={`delete ${this.props.id}`}
+								x={-70}
+								y={0}
+								fill='#c0392b'
+								stroke={nodeOutline}
 								radius={25}
 							/>
 						</Group>

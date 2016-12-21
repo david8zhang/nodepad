@@ -148,11 +148,49 @@ export const addRelationship = (srcId, dest, topicId) => {
 		}
 		destNode.edges = destEdgeSet.concat({
 			title: 'RELATION DEST',
-			node: dest.id
+			node: srcId
 		});
 		nodes[dest.id] = destNode;
 		getNodeRef.set({
 			nodes
 		});
 	});
-}
+};
+
+/**
+ * Delete a node from the graph
+ * @param  {Object} node    The node to be deleted
+ * @param  {String} topicId The id of the topic the node in question belongs to
+ * @return {Promise}         A promise that corresponds to the put event
+ */
+export const deleteNode = (node, topicId) => {
+	console.log('node', node);
+	const { id } = node;
+	const getNodeRef = firebase.database().ref(`topics/${topicId}`);
+	return getNodeRef.once('value').then((snapshot) => {
+		const nodes = snapshot.val().nodes;
+		const toDelete = nodes[id];
+		const toDeleteEdges = toDelete.edges;
+
+		if (toDeleteEdges) {
+			// Delete the edges that connect to the deleted node
+			toDeleteEdges.forEach((edge) => {
+				const parentNode = nodes[edge.node];
+				const parentEdgeSet = parentNode.edges;
+				const noDeletedEdges = [];
+				parentEdgeSet.forEach((parentEdge) => {
+					if (parentEdge.node !== id) {
+						noDeletedEdges.push(parentEdge);
+					}
+				});
+				parentNode.edges = noDeletedEdges;
+			});			
+		}
+
+		nodes[id] = null;
+
+		getNodeRef.set({
+			nodes
+		});
+	});
+};

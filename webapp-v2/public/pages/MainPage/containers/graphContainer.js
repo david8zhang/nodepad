@@ -1,17 +1,19 @@
 /* global localStorage */
 import React, { Component } from 'react';
+import { ModalContainer, ModalDialog } from 'react-modal-dialog';
 import { connect } from 'react-redux';
 import { Stage } from 'react-konva';
 import * as actions from '../../../actions';
 import { moveNode, addRelationship } from '../../../lib';
 import CreateNodeModal from './createNodeModal';
-import { Node, Edge } from '../../../components';
+import { Node, Edge, Button } from '../../../components';
 
 class GraphContainer extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			parent: null
+			parent: null,
+			confirmDelete: false
 		};
 	}
 
@@ -21,6 +23,17 @@ class GraphContainer extends Component {
 			const topicId = localStorage.getItem('topic_id');
 			this.props.getNodes(topicId);
 		}
+	}
+
+	/**
+	 * Delete the node
+	 * @return {None} 
+	 */
+	onDelete() {
+		this.props.onDelete(this.state.confirmDelete);
+		this.setState({
+			confirmDelete: false
+		});
 	}
 
 	/**
@@ -105,6 +118,7 @@ class GraphContainer extends Component {
 						x={node.x}
 						y={node.y}
 						isRelSrc={node.id === this.props.relSrcId}
+						onDelete={(src) => this.setState({ confirmDelete: src })}
 						onAddRelation={(src, isRelSrc) => this.setRelSrc(src, isRelSrc)}
 						onAddChild={(parent) => this.toggleModal(parent)}
 						onClick={(nodeProps) => this.selectSubtree(nodeProps)}
@@ -174,9 +188,29 @@ class GraphContainer extends Component {
 	}
 
 	render() {
-		console.log(this.props.relSrcId);
 		return (
 			<div>
+				{
+					this.state.confirmDelete &&
+					<ModalContainer>
+						<ModalDialog>
+							<h1>Are you sure you want to delete this node?</h1>
+							<Button
+								text='Delete'
+								onClick={() => this.onDelete()}
+							/>
+							<Button
+								style={{ 
+									marginLeft: '10px', 
+									backgroundColor: '#d32f2f',
+									borderColor: '#d32f2f'
+								}}
+								text='Cancel'
+								onClick={() => this.setState({ confirmDelete: false })}
+							/>
+						</ModalDialog>
+					</ModalContainer>
+				}
 				<CreateNodeModal 
 					isShowingModal={this.props.showChildModal}
 					onSubmit={(child) => this.props.onAddChild(child, this.state.parent)}

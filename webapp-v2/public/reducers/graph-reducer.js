@@ -75,6 +75,28 @@ export default (state = initialState, action) => {
 			dest.edges = destEdgeSet;
 			return newState.set(dest.id, dest);
 		}
+		case types.DELETE_NODE: {
+			const newState = JSON.parse(JSON.stringify(state.toJS()));
+			const { id } = action.payload;
+
+			// Delete all edges that connect to the node to be deleted
+			const toDelete = newState[id];
+			if (toDelete.edges) {
+				const edgeSet = toDelete.edges;
+				edgeSet.forEach((edge) => {
+					const srcNode = newState[edge.node];
+					const srcNodeEdgeSet = srcNode.edges;
+					const newEdgeSet = [];
+					srcNodeEdgeSet.forEach((srcEdge) => {
+						if (srcEdge.node !== id) {
+							newEdgeSet.push(srcEdge);
+						}
+					});
+					srcNode.edges = newEdgeSet;
+				});				
+			}
+			return Map(newState).delete(id);
+		}
 		default:
 			return state;
 	}
