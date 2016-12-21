@@ -164,7 +164,6 @@ export const addRelationship = (srcId, dest, topicId) => {
  * @return {Promise}         A promise that corresponds to the put event
  */
 export const deleteNode = (node, topicId) => {
-	console.log('node', node);
 	const { id } = node;
 	const getNodeRef = firebase.database().ref(`topics/${topicId}`);
 	return getNodeRef.once('value').then((snapshot) => {
@@ -193,4 +192,24 @@ export const deleteNode = (node, topicId) => {
 			nodes
 		});
 	});
+};
+
+/**
+ * Login with the given email and password parameters
+ * @param  {Object} params The object containing the email and password
+ * @return {Promise}        A promise object corresponding to a sign in event
+ */
+export const login = (params) => {
+	const { email, password } = params;
+	return firebase.auth().signInWithEmailAndPassword(email, password);
+};
+
+/**
+ * Create an account with the given email and password parameters
+ * @param  {Object} params The parameters containing the email and password
+ * @return {Promise}        A promise object corresponding to an account creation action
+ */
+export const createAccount = (params) => {
+	const { email, password } = params;
+	return firebase.auth().createUserWithEmailAndPassword(email, password);
 };

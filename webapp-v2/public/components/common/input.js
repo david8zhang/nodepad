@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Input = (props) => (
-	<div>
+	<div style={props.style}>
 		<label htmlFor={props.id}>
 			{props.label}
 		</label>
